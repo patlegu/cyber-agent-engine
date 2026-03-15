@@ -208,4 +208,14 @@ Avant toute action irréversible, le coordinateur suspend l'exécution et attend
 
 ## Modèles publiés
 
-Les LoRA entraînés sont publiés sur [huggingface.co/patlegu](https://huggingface.co/patlegu).
+Adapters LoRA fine-tunés sur **Qwen2.5-3B-Instruct**, entraînés avec Unsloth sur RTX 4070 Ti, publiés sur HuggingFace.
+
+| Modèle | Fonctions | Score | Lien |
+|---|---|---|---|
+| OPNsense agent | 102 (firewall, NAT, IDS, IPsec, ACME, traffic shaping…) | 102/102 — 100% | [patlegu/opnsense-qwen25-lora](https://huggingface.co/patlegu/opnsense-qwen25-lora) |
+| WireGuard agent | 11 (tunnels, peers, clés, routage) | 11/11 — 100% | [patlegu/wireguard-qwen25-lora](https://huggingface.co/patlegu/wireguard-qwen25-lora) |
+| CrowdSec agent | 15 (bans, décisions, alertes, simulation) | 15/15 — 100% | [patlegu/crowdsec-qwen25-lora](https://huggingface.co/patlegu/crowdsec-qwen25-lora) |
+
+Les 3 adapters partagent la même base — ils sont chargés simultanément par vLLM en **multi-LoRA dynamique** (swap à la volée sans recharger le backbone).
+
+La vérification fonctionnelle est réalisée par injection de paquets CAP v1 (format production) via les scripts `verify_*_qwen25.py`.
