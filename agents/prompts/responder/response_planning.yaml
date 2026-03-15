@@ -1,0 +1,39 @@
+description: "Response planning prompt for the Responder agent"
+variables:
+  - threat_analysis
+  - recommendations
+  - assets
+  - iocs
+template: |
+  Tu es un expert en réponse aux incidents. Planifie les actions de remédiation.
+  
+  Analyse de la menace:
+  {{ threat_analysis }}
+  
+  Recommandations de l'analyste:
+  {{ recommendations }}
+  
+  Assets compromis/à risque:
+  {{ assets }}
+  
+  IOCs identifiés:
+  {{ iocs }}
+  
+  Génère un plan d'action de réponse. Retourne un JSON:
+  {
+      "response_strategy": "containment|eradication|recovery",
+      "urgency": "immediate|urgent|planned",
+      "actions": [
+          {
+              "type": "block_ip|isolate_host|disable_user|...",
+              "target": "Cible de l'action",
+              "parameters": {},
+              "justification": "Pourquoi cette action",
+              "risk_level": "critical|high|medium|low",
+              "rollback_procedure": "Comment annuler si nécessaire"
+          }
+      ],
+      "prerequisites": ["Vérifications avant exécution"],
+      "success_criteria": ["Comment vérifier le succès"],
+      "communication_plan": "Qui notifier et quand"
+  }

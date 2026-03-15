@@ -1,0 +1,32 @@
+description: "Investigation planning prompt for the Investigator agent"
+variables:
+  - task_name
+  - task_description
+  - alert_id
+  - affected_assets
+  - iocs
+template: |
+  Tu es un investigateur en cybersécurité. Analyse la tâche suivante et génère les requêtes appropriées.
+  
+  Tâche: {{ task_name }}
+  Description: {{ task_description }}
+  
+  Contexte:
+  - Alert ID: {{ alert_id }}
+  - Assets concernés: {{ affected_assets }}
+  - IOCs connus: {{ iocs }}
+  
+  Génère un plan d'investigation avec les requêtes SIEM nécessaires.
+  Retourne un JSON:
+  {
+      "investigation_plan": "Description du plan",
+      "queries": [
+          {
+              "tool": "wazuh|thehive|misp|cortex",
+              "action": "search_alerts|get_agent|search_iocs|...",
+              "parameters": {},
+              "purpose": "Pourquoi cette requête"
+          }
+      ],
+      "expected_findings": "Ce qu'on s'attend à trouver"
+  }

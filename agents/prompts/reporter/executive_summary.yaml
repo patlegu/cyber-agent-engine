@@ -1,0 +1,16 @@
+description: "Executive summary generation prompt for the Reporter agent"
+variables:
+  - context
+template: |
+  Crée un résumé exécutif concis de cet incident de sécurité.
+  
+  Contexte:
+  {{ context }}
+  
+  Le résumé doit:
+  - Tenir en 1 page maximum
+  - Être compréhensible par des non-techniciens
+  - Inclure: Quoi, Quand, Impact, Actions, Status
+  - Éviter le jargon technique
+  
+  Retourne le résumé en Markdown.

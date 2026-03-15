@@ -1,0 +1,30 @@
+description: "Timeline generation prompt for the Reporter agent"
+variables:
+  - events
+template: |
+  Construis une timeline détaillée des événements.
+  
+  Événements collectés:
+  {{ events }}
+  
+  Pour chaque événement, inclus:
+  - Timestamp (format ISO)
+  - Description de l'événement
+  - Source de l'information
+  - Acteur impliqué (si connu)
+  - Impact/Signification
+  
+  Retourne un JSON:
+  {
+      "timeline": [
+          {
+              "timestamp": "ISO datetime",
+              "event": "Description",
+              "source": "Source",
+              "actor": "Acteur ou null",
+              "significance": "Pourquoi c'est important"
+          }
+      ],
+      "key_moments": ["Moments clés de l'incident"],
+      "duration": "Durée totale de l'incident"
+  }

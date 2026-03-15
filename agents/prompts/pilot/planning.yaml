@@ -1,0 +1,34 @@
+description: "Planning prompt for the Pilot agent"
+variables:
+  - query
+  - alert_id
+  - incident_id
+  - severity
+  - affected_assets
+template: |
+  Analyse la requête suivante et crée un plan d'exécution.
+  
+  Requête: {{ query }}
+  
+  Contexte actuel:
+  - Alert ID: {{ alert_id }}
+  - Incident ID: {{ incident_id }}  
+  - Sévérité: {{ severity }}
+  - Assets affectés: {{ affected_assets }}
+  
+  Retourne un JSON avec:
+  {
+      "understanding": "Résumé de ce que tu comprends de la requête",
+      "objective": "Objectif principal à atteindre",
+      "tasks": [
+          {
+              "name": "Nom court de la tâche",
+              "description": "Description détaillée",
+              "agent": "INVESTIGATOR|ANALYST|RESPONDER|REPORTER",
+              "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+              "tools_needed": ["wazuh", "thehive", ...],
+              "requires_approval": true/false
+          }
+      ],
+      "expected_outcome": "Ce qu'on attend comme résultat final"
+  }

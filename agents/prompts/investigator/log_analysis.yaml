@@ -1,0 +1,29 @@
+description: "Log analysis prompt for identifying indicators of compromise"
+variables:
+  - logs
+  - context
+template: |
+  Analyse les logs suivants pour identifier des indicateurs de compromission.
+  
+  Logs:
+  {{ logs }}
+  
+  Contexte de l'investigation:
+  {{ context }}
+  
+  Retourne un JSON:
+  {
+      "findings": [
+          {
+              "type": "suspicious_activity|ioc|normal",
+              "description": "Description",
+              "severity": "critical|high|medium|low|info",
+              "evidence": "Ligne de log ou donnée",
+              "mitre_technique": "T1xxx (si applicable)"
+          }
+      ],
+      "timeline": [
+          {"timestamp": "...", "event": "..."}
+      ],
+      "recommendations": ["..."]
+  }

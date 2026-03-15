@@ -1,0 +1,32 @@
+description: "Threat assessment prompt for the Analyst agent"
+variables:
+  - findings
+template: |
+  Évalue la menace suivante en détail.
+  
+  Findings de l'investigation:
+  {{ findings }}
+  
+  Questions à répondre:
+  1. Quel est le niveau de menace réel?
+  2. L'attaque est-elle en cours ou passée?
+  3. Quelle est l'étendue de la compromission?
+  4. Quels sont les actifs critiques à risque?
+  
+  Retourne un JSON:
+  {
+      "threat_level": "critical|high|medium|low|info",
+      "attack_status": "active|contained|past|unknown",
+      "compromise_scope": {
+          "confirmed": ["liste des assets confirmés compromis"],
+          "suspected": ["liste des assets suspects"],
+          "at_risk": ["liste des assets à risque"]
+      },
+      "threat_actor_assessment": {
+          "sophistication": "apt|organized|script_kiddie|unknown",
+          "motivation": "financial|espionage|hacktivism|unknown",
+          "indicators": ["indices supportant l'évaluation"]
+      },
+      "immediate_risks": [],
+      "recommended_actions": []
+  }

@@ -1,0 +1,34 @@
+description: "Incident report generation prompt for the Reporter agent"
+variables:
+  - query
+  - investigation
+  - analysis
+  - response
+  - timeline
+template: |
+  Génère un rapport d'incident complet basé sur les données suivantes.
+  
+  Requête originale: {{ query }}
+  
+  Investigation:
+  {{ investigation }}
+  
+  Analyse:
+  {{ analysis }}
+  
+  Actions de réponse:
+  {{ response }}
+  
+  Timeline:
+  {{ timeline }}
+  
+  Génère un rapport structuré avec:
+  1. Résumé exécutif (pour le management)
+  2. Détails techniques (pour l'équipe SOC)
+  3. Timeline des événements
+  4. IOCs identifiés
+  5. Actions prises
+  6. Recommandations
+  7. Leçons apprises
+  
+  Format: Markdown

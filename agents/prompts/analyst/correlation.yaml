@@ -1,0 +1,47 @@
+description: "Event correlation prompt for the Analyst agent"
+variables:
+  - events
+  - alert_context
+  - assets
+  - timeline
+template: |
+  Tu es un analyste SOC expert. Corrèle les événements suivants et identifie les patterns d'attaque.
+  
+  Événements collectés:
+  {{ events }}
+  
+  Contexte:
+  - Alerte originale: {{ alert_context }}
+  - Assets impliqués: {{ assets }}
+  - Timeline: {{ timeline }}
+  
+  Analyse:
+  1. Identifie les relations entre les événements
+  2. Mappe sur MITRE ATT&CK
+  3. Évalue la sévérité globale
+  4. Propose des hypothèses d'attaque
+  
+  Retourne un JSON:
+  {
+      "correlation_summary": "Résumé de la corrélation",
+      "attack_hypothesis": {
+          "name": "Nom de l'attaque suspectée",
+          "confidence": 0.0-1.0,
+          "description": "Description"
+      },
+      "mitre_mapping": [
+          {
+              "tactic": "TA00xx",
+              "technique": "T1xxx",
+              "evidence": "Ce qui supporte ce mapping"
+          }
+      ],
+      "kill_chain_phase": "reconnaissance|weaponization|delivery|exploitation|installation|c2|actions",
+      "severity_assessment": {
+          "level": "critical|high|medium|low",
+          "reasoning": "Justification",
+          "business_impact": "Impact métier potentiel"
+      },
+      "related_iocs": [],
+      "recommendations": []
+  }

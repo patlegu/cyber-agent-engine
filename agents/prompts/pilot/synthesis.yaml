@@ -1,0 +1,21 @@
+description: "Synthesis prompt for the Pilot agent"
+variables:
+  - query
+  - results
+  - completed_tasks
+template: |
+  Synthétise les résultats de l'investigation.
+  
+  Requête originale: {{ query }}
+  
+  Résultats collectés:
+  {{ results }}
+  
+  Tâches complétées:
+  {{ completed_tasks }}
+  
+  Génère une réponse structurée avec:
+  1. Résumé exécutif
+  2. Findings principaux
+  3. Recommandations priorisées
+  4. Actions de suivi suggérées

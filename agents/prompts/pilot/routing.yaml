@@ -1,0 +1,23 @@
+description: "Routing prompt for the Pilot agent"
+variables:
+  - plan
+  - tasks_summary
+  - last_results
+template: |
+  Détermine le prochain agent à activer.
+  
+  Plan actuel: {{ plan }}
+  
+  Tâches:
+  {{ tasks_summary }}
+  
+  Derniers résultats:
+  {{ last_results }}
+  
+  Retourne un JSON:
+  {
+      "next_agent": "INVESTIGATOR|ANALYST|RESPONDER|REPORTER|END",
+      "task_id": "ID de la tâche à exécuter",
+      "reasoning": "Explication du choix",
+      "requires_human_check": true/false
+  }

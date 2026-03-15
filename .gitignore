@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.ipynb_checkpoints/
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# Build
+build/
+dist/
+*.egg-info/
+.vscode/
+.idea/
+
+# Modèles, LoRAs, données — non publiés
+/models/
+/loras/
+/data/
+/exports/
+*.gguf
+*.bin
+*.model
+*.safetensors
+*.spacy
+
+# Logs & outputs
+/logs/
+*.log
+output.txt
+
+# Dashboard
+dashboard/frontend/node_modules/
+dashboard/frontend/.env
+
+# Secrets
+.env
+*.key
+*.pem
+*.crt
+*.p12
+sops.yaml
+.sops.yaml
+.aider*
