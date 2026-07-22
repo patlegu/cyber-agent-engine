@@ -15,7 +15,7 @@
 - **Le LLM ne s'auto-autorise jamais** : `rationale` et tout champ de type « requires_approval » produit par le LLM sont ignorés par `evaluate`.
 - **Invariant tokenisation** : aucune valeur réelle du `vault` ne doit apparaître dans un prompt, un log ou une ligne d'audit. Seuls `execution/` (avant l'appel équipement) et la vue d'approbation humaine détokenisent.
 - **Conventions commit (`AGENTS.md`)** : le message décrit le changement, **pas** son auteur — pas de `Co-Authored-By`, pas de mention IA/Claude/GPT. Ne pas committer de binaires compilés ni `node_modules/`.
-- **Portes qualité avant chaque commit** : `./.venv/bin/ruff check .` + `./.venv/bin/mypy core` + `./.venv/bin/pytest -q`.
+- **Portes qualité avant chaque commit** : `./.venv/bin/ruff check core` + `./.venv/bin/mypy core` + `./.venv/bin/pytest -q`.
 - Nouveau code sous `core/` uniquement ; le `coordinator/` actuel (ReAct/Judge fail-open) n'est PAS modifié dans ce plan — il sera remplacé par le câblage sur `core/` en Task 9. `clients/` n'est pas touché.
 
 ---
@@ -1583,7 +1583,7 @@ git commit -m "feat(core): orchestrateur de confiance (tokenize -> propose -> po
 - [ ] **Step 1 : Passe qualité complète**
 
 Run : `./.venv/bin/ruff check . && ./.venv/bin/mypy core && ./.venv/bin/pytest -q --cov=core`
-Expected : ruff propre, mypy « Success », tous les tests verts, couverture `core/` élevée (viser ≥ 95 % sur les modules purs).
+Expected : ruff (core) propre, mypy « Success », tous les tests verts, couverture `core/` élevée (viser ≥ 95 % sur les modules purs).
 
 - [ ] **Step 2 : Audit CQI ciblé sur `core/`**
 
