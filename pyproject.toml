@@ -29,6 +29,10 @@ select = ["E", "F", "I", "B", "UP", "SIM", "PL", "RUF"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
+# Vérifie strictement le périmètre `files` ; n'émet PAS les erreurs des modules
+# legacy suivis en import (dette pré-existante hors sous-projet B). Décision
+# contrôleur analogue au gating ruff du sous-projet A.
+follow_imports = "silent"
 files = ["core"]
 
 [tool.pytest.ini_options]
