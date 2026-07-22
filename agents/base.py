@@ -552,7 +552,7 @@ class ToolAgent(ABC):
 
         except Exception as e:
             logger.error(f"Erreur inférence vLLM: {e}")
-            return await self._infer_with_simulation(user_request)
+            raise
 
     async def _infer_with_openai_compat(self, user_request: str) -> "FunctionCall":
         """Inférence NL via un endpoint OpenAI-compatible servant le LoRA de l'outil."""
@@ -649,8 +649,7 @@ class ToolAgent(ABC):
             
         except Exception as e:
             logger.error(f"Erreur lors de l'inférence LoRA: {e}")
-            logger.warning("Fallback sur la simulation")
-            return await self._infer_with_simulation(user_request)
+            raise
 
     async def _infer_with_ollama(self, user_request: str) -> FunctionCall:
         """Inférence via Ollama API."""
@@ -681,7 +680,7 @@ class ToolAgent(ABC):
             
         except Exception as e:
             logger.error(f"Erreur inférence Ollama: {e}")
-            return await self._infer_with_simulation(user_request)
+            raise
 
     def _build_chat_messages(self, user_request: str) -> List[Dict]:
         """Construit les messages pour le chat Ollama."""

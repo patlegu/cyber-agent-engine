@@ -175,7 +175,7 @@ Fonctions valides: {}
             
         except Exception as e:
             logger.error(f"Erreur inférence Ollama: {e}")
-            return await self._infer_with_simulation(user_request)
+            raise
 
     def _register_functions(self) -> Dict[str, callable]:
         """Enregistre les fonctions CrowdSec."""
