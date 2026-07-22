@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel
 
-from coordinator.loop import Completed, Denied, GatedLoop, LoopResult, Suspended
+from coordinator.loop import Completed, Denied, Failed, GatedLoop, LoopResult, Suspended
 from core.auth.api_key import make_auth_dependency
 
 
@@ -27,7 +27,9 @@ def _serialize(result: LoopResult) -> dict[str, Any]:
         return {"status": "pending_approval", "approval_id": result.approval_id}
     if isinstance(result, Denied):
         return {"status": "denied", "reason": result.reason}
-    return {"status": "failed", "reason": result.reason}
+    if isinstance(result, Failed):
+        return {"status": "failed", "reason": result.reason}
+    raise TypeError(f"variante LoopResult non sérialisée : {type(result).__name__}")
 
 
 def build_app(*, loop: GatedLoop, auth_secret: str) -> FastAPI:

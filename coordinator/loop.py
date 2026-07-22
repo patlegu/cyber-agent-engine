@@ -16,7 +16,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, ConfigDict
 
 from coordinator.agent_call import AgentCall
-from coordinator.proposer import Finish, Proposal
+from coordinator.proposer import Finish, Proposal, ProposerError
 from coordinator.session import Clock, SessionState, SessionStore
 from core.approval.store import ApprovalStore
 from core.audit.sink import AuditSink, entry_from_verdict
@@ -109,9 +109,15 @@ class GatedLoop:
         except NotAuthorized:
             self._sink.write(entry_from_verdict(verdict, event="resume_refuse"))
             return Denied(reason=f"approbation en état {approval.state}")
-        result = await execute(authorized, vault, self._call)
+        # Consommer l'approbation AVANT d'exécuter : anti-rejeu fail-closed. Une panne
+        # transitoire de l'agent pendant `execute` ne doit jamais laisser une session
+        # approuvée rejouable (un ban n'est pas idempotent, il ne doit jamais s'exécuter deux fois).
         self._approvals.mark_executed(approval_id)
         self._sessions.delete(approval_id)
+        try:
+            result = await execute(authorized, vault, self._call)
+        except Exception as exc:  # frontière d'exécution : jamais de 500 non géré
+            return Failed(reason=f"execution: {type(exc).__name__}")
         self._sink.write(entry_from_verdict(verdict, event="executed_after_approval"))
         history = [*session.history, self._retokenize(result, vault)]
         results = [*session.results, result]
@@ -129,8 +135,19 @@ class GatedLoop:
         return Denied(reason="rejeté par l'opérateur")
 
     def _retokenize(self, result: dict[str, Any], vault: Vault) -> str:
-        """Jetonise le résultat d'exécution avant de l'exposer au LLM dans l'historique."""
-        return tokenize(json.dumps(result, ensure_ascii=False), vault, self._extract)
+        """Jetonise le résultat : d'abord les valeurs déjà connues du vault (déterministe,
+        indépendant de l'extracteur), puis les entités nouvelles via l'extracteur.
+
+        `tokenize` seul ne jetonise que ce que l'extracteur DÉTECTE — en prod, une NER
+        spaCy qui échoue à re-détecter une IP déjà connue dans le JSON du résultat
+        la laisserait fuiter verbatim dans `history`, donc dans le prochain prompt.
+        Le coordinateur connaît déjà toutes les valeurs réelles du vault : la
+        re-tokenisation doit être complète pour elles quel que soit l'extracteur.
+        """
+        text = json.dumps(result, ensure_ascii=False)
+        for token, real in sorted(vault.items().items(), key=lambda kv: len(kv[1]), reverse=True):
+            text = text.replace(real, token)
+        return tokenize(text, vault, self._extract)
 
     async def _run(
         self,
@@ -142,7 +159,10 @@ class GatedLoop:
     ) -> LoopResult:
         """Boucle proposer → décider → (suspendre | exécuter) jusqu'à `Finish` ou la limite."""
         while step < self._max_steps:
-            proposal: Proposal = await self._proposer.propose(request_tokens, history)
+            try:
+                proposal: Proposal = await self._proposer.propose(request_tokens, history)
+            except ProposerError as exc:
+                return Failed(reason=f"proposer: {type(exc).__name__}")
             if isinstance(proposal, Finish):
                 return Completed(summary=proposal.summary, results=results)
             intention = proposal.intention
@@ -160,7 +180,10 @@ class GatedLoop:
                     results=results,
                 ))
                 return Suspended(approval_id=sid)
-            result = await execute(grant(verdict), vault, self._call)
+            try:
+                result = await execute(grant(verdict), vault, self._call)
+            except Exception as exc:  # frontière d'exécution : jamais de 500 non géré
+                return Failed(reason=f"execution: {type(exc).__name__}")
             self._sink.write(entry_from_verdict(verdict, event="executed"))
             results.append(result)
             history = [*history, self._retokenize(result, vault)]
