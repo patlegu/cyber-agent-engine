@@ -52,3 +52,6 @@ sops.yaml
 
 # Scratchpad orchestration (subagent-driven development)
 .superpowers/
+
+# Coverage
+.coverage
