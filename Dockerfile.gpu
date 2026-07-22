@@ -6,7 +6,7 @@
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.11 python3.11-venv python3-pip \
+        python3.11 python3.11-venv python3.11-dev \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.11 /usr/local/bin/python
 RUN useradd --create-home --uid 10001 appuser
@@ -18,7 +18,8 @@ COPY agents ./agents
 COPY clients ./clients
 COPY server.py ./
 COPY dashboard ./dashboard
-RUN python -m pip install --no-cache-dir --upgrade "pip" "setuptools>=77" wheel \
+RUN python -m ensurepip --upgrade \
+    && python -m pip install --no-cache-dir --upgrade "pip" "setuptools>=77" wheel \
     && python -m pip install --no-cache-dir ".[gpu]"
 RUN mkdir -p /data && chown appuser:appuser /data
 USER appuser
