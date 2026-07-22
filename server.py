@@ -191,14 +191,22 @@ async def lifespan(app: FastAPI):
         "model": os.getenv("OLLAMA_MODEL", "opnsense-phi3")
     }
 
+    # Backend d'inférence OpenAI-compatible partagé (fail-closed : None si
+    # AGENT_INFER_BASE_URL absent, les agents retombent alors sur ollama/vllm).
+    from agents.infer_wiring import build_infer_client, resolve_lora_models
+    _infer_client = build_infer_client(os.environ)
+    _lora_models = resolve_lora_models(os.environ)
+
     # OPNsense Agent
     agents["opnsense"] = OPNsenseAgent(
         model_path=None,
         api_config=api_config if OPNSENSE_KEY else None,
         ollama_config=ollama_config,
-        vllm_client=vllm_client
+        vllm_client=vllm_client,
+        openai_client=_infer_client,
+        lora_model=_lora_models.get("opnsense", ""),
     )
-    
+
     # WireGuard Agent
     agents["wireguard"] = WireGuardAgent(
         platform="opnsense",
@@ -206,7 +214,9 @@ async def lifespan(app: FastAPI):
         ollama_config=ollama_config,
         model_path=None,
         simulation_mode=(OPNSENSE_KEY is None),
-        vllm_client=vllm_client
+        vllm_client=vllm_client,
+        openai_client=_infer_client,
+        lora_model=_lora_models.get("wireguard", ""),
     )
 
     # CrowdSec Agent
@@ -220,16 +230,20 @@ async def lifespan(app: FastAPI):
         api_config=crowdsec_config,
         ollama_config=ollama_config,
         vllm_client=vllm_client,
+        openai_client=_infer_client,
+        lora_model=_lora_models.get("crowdsec", ""),
     )
 
     logger.info("✅ Agents initialized.")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down server...")
     if vllm_client:
         vllm_client.shutdown()
+    if _infer_client is not None:
+        await _infer_client.aclose()
     if _http_client:
         await _http_client.aclose()
     if _opnsense_http_client:

@@ -97,6 +97,8 @@ class CrowdSecAgent(ToolAgent):
         api_config: Optional[Dict] = None,
         ollama_config: Optional[Dict] = None,
         vllm_client=None,
+        openai_client=None,
+        lora_model: str = "",
     ):
         super().__init__(
             tool_name="crowdsec",
@@ -104,6 +106,8 @@ class CrowdSecAgent(ToolAgent):
             api_config=api_config,
             ollama_config=ollama_config,
             vllm_client=vllm_client,
+            openai_client=openai_client,
+            lora_model=lora_model,
         )
         self.client = None
         self._init_client()

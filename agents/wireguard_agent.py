@@ -96,11 +96,13 @@ class WireGuardAgent(ToolAgent):
         simulation_mode: bool = False,
         ollama_config: Optional[Dict] = None,
         model_path: Optional[str] = None,
-        vllm_client: Optional[Any] = None
+        vllm_client: Optional[Any] = None,
+        openai_client: Optional[Any] = None,
+        lora_model: str = ""
     ):
         """
         Initialise l'agent WireGuard.
-        
+
         Args:
             platform: Plateforme cible ("opnsense" ou "linux")
             config: Configuration pour la plateforme (requis pour OPNsense)
@@ -108,18 +110,22 @@ class WireGuardAgent(ToolAgent):
             ollama_config: Config Ollama override {"model": "...", "url": "..."}
             model_path: Chemin LoRA local (optionnel)
             vllm_client: Client vLLM partagé (optionnel)
+            openai_client: Client HTTP OpenAI-compatible partagé (optionnel)
+            lora_model: Nom du LoRA à passer à openai_client (optionnel)
         """
         self.platform = platform
         self.simulation_mode = simulation_mode
         self.config = config or {}
-        
+
         # Initialiser l'agent de base
         super().__init__(
             tool_name="wireguard",
             model_path=model_path or self.config.get('model_path'),
             api_config=config,
             ollama_config=ollama_config,
-            vllm_client=vllm_client
+            vllm_client=vllm_client,
+            openai_client=openai_client,
+            lora_model=lora_model
         )
         
         # Initialiser le client approprié
