@@ -1756,15 +1756,13 @@ l'agent (l'opérateur est autorisé). Plus de `/api/logs` (fuite PII de l'audit)
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel
 
 from coordinator.loop import Completed, Denied, Failed, GatedLoop, LoopResult, Suspended
-from core.auth.api_key import load_auth_secret, make_auth_dependency
+from core.auth.api_key import make_auth_dependency
 
 
 class ExecuteRequest(BaseModel):
@@ -1802,26 +1800,17 @@ def build_app(*, loop: GatedLoop, auth_secret: str) -> FastAPI:
         return _serialize(loop.reject(approval_id))
 
     return app
-
-
-def create_default_app() -> FastAPI:
-    """Assemble l'app réelle depuis l'environnement (fail-closed sur secrets)."""
-    from coordinator.session import load_session_key  # noqa: F401 — utilisé au câblage réel
-    auth_secret = load_auth_secret(os.environ, "COORDINATOR_API_KEY")
-    # Le câblage complet (LLM, clients agents, catalogue, politique, session store)
-    # est réalisé ici en production ; laissé au lancement uvicorn. Voir README.
-    raise NotImplementedError("câblage runtime : voir docs de déploiement (hors périmètre test)")
 ```
 
-Note : `create_default_app` laisse le câblage runtime complet (chargement politique, `build_catalog` depuis les `get_capabilities` live, `EncryptedFileSessionStore`, `LlmProposer(llm=CoordinatorLLM())`, `make_agent_call(clients)`) au déploiement. Le test couvre `build_app` avec des doubles ; le câblage réel est un point d'assemblage sans logique, documenté au README (Task hors-code). Si le reviewer exige un `create_default_app` exécutable, l'implémenter en réutilisant le `lifespan` de l'ancien `server.py` pour ouvrir les `ToolAgentClient`, appeler leurs `get_capabilities`, `build_catalog`, charger la politique YAML, et instancier `GatedLoop` — mais **sans** aucune I/O au niveau module (fail-closed sur secrets uniquement).
+Ne PAS ajouter de `create_default_app` : `build_app(*, loop, auth_secret)` est le SEUL point public de B. Les imports `os`/`Path`/`load_auth_secret` du squelette ne servent qu'à `build_app` (garder uniquement ceux réellement utilisés — ruff F401). L'assemblage runtime complet (ouverture des `ToolAgentClient` UDS, `get_capabilities` live → `build_catalog`, chargement de la politique YAML, `EncryptedFileSessionStore`, `LlmProposer(llm=CoordinatorLLM())`, `make_agent_call(clients)`, point d'entrée uvicorn) relève du **sous-projet D** (packaging/exploitation). B livre la fabrique testable ; le seam est net.
 
 - [ ] **Step 5 : Supprimer le legacy et repointer l'entrée**
 
 ```bash
-git rm coordinator/pilot.py coordinator/judge.py
+git rm coordinator/pilot.py coordinator/judge.py coordinator/server.py coordinator/state.py
 ```
 
-Remplacer `coordinator/server.py` par un ré-export mince vers la nouvelle app (le point d'entrée uvicorn devient `coordinator.app:create_default_app` — factory) OU supprimer `server.py` et documenter le nouveau point d'entrée. Choix : supprimer `coordinator/server.py` et mettre à jour toute référence (`grep -rn "coordinator.server\|coordinator/server\|PilotAgent" --include='*.py' .`) ; retirer les tests legacy devenus caducs (ceux qui importent `pilot`/`judge`/`CoordinatorDirective`).
+`coordinator/server.py` (ancienne app + `/api/logs` + auth fail-open + `PilotAgent`) est supprimé ; `coordinator/state.py` (`CheckpointStore`/`RunStatus`/`TaskStatus`, l'ancien mécanisme d'approbation remplacé par `core.approval` + `SessionStore`) devient orphelin (importé seulement par pilot/server supprimés — vérifié) et est supprimé aussi. Vérifier qu'aucun import résiduel ne subsiste : `grep -rn "coordinator.server\|coordinator.state\|coordinator.pilot\|coordinator.judge\|PilotAgent\|CoordinatorDirective" --include='*.py' . | grep -v /.venv/` doit être vide (hors la suppression du champ dans `models.py`). Aucun **test** n'importe ces modules (vérifié : la suite de tests ne référence que core/coordinator[B]/agents). Le point d'entrée uvicorn runtime est un livrable du sous-projet D. Corriger le commentaire périmé `agents/ner_extractor.py:5` qui cite `CoordinatorDirective.entities` (référence morte).
 
 - [ ] **Step 6 : Étendre la couverture mypy à la surface B**
 
