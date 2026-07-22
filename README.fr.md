@@ -311,6 +311,23 @@ coordinateur refuse de démarrer si une variable obligatoire manque ou si
 `policy.yml` est invalide (fail-closed). Image GPU : override documenté (base CUDA
 + `pip install .[gpu]`), hors périmètre par défaut.
 
+### Exploitation
+
+- **Rétention de l'audit (disque borné)** : le log d'audit du coordinateur tourne
+  par taille. Régler `COORDINATOR_AUDIT_MAX_BYTES` (défaut 100 Mio par fichier) et
+  `COORDINATOR_AUDIT_BACKUPS` (défaut 5) ; l'usage disque est borné à environ
+  `max_bytes × (backups + 1)`.
+- **Plusieurs serveurs d'agents** : régler `AGENT_SERVERS` (URLs séparées par
+  virgule, ex. `http://agent-a:3000,http://agent-b:3000`) pour router différents
+  agents vers différents serveurs. Vide = le seul `AGENT_SERVER_URL`. Deux serveurs
+  exposant le même nom d'agent → le coordinateur refuse de démarrer (routage
+  ambigu).
+- **Image GPU** : `docker build -f Dockerfile.gpu -t cyber-agent-engine:gpu .` pour
+  servir les agents LoRA in-process (installe l'extra `[gpu]` : torch, vLLM,
+  unsloth). L'image par défaut est CPU.
+- **`policy.example.yml`** est fourni avec le dépôt source, pas avec le wheel pip —
+  le copier depuis le dépôt (ou écrire le vôtre depuis le format ci-dessus).
+
 ## Licence
 
 Ce programme est un logiciel libre sous **AGPL-3.0-or-later** — voir [LICENSE](LICENSE).
