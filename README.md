@@ -107,11 +107,11 @@ OPNSENSE_API_SECRET=<secret>
 CROWDSEC_URL=http://localhost:8080/v1
 CROWDSEC_API_KEY=<bouncer-key>
 
-# Modèle de base des agents (LoRA partagé)
+# Base model for agents (shared LoRA)
 TOOL_AGENT_BASE_MODEL=Qwen/Qwen2.5-3B-Instruct
 TOOL_AGENT_GPU_UTIL=0.45
 
-# Auth agent-to-agent (omis = mode dev)
+# Agent-to-agent auth (omitted = dev mode)
 AGENT_API_KEY=<clé-forte-aléatoire>
 ```
 
@@ -120,7 +120,7 @@ AGENT_API_KEY=<clé-forte-aléatoire>
 ### Installation
 
 ```bash
-pip install cyber-agent-engine          # cœur : coordinateur (API) + agents structurés, sans GPU
+pip install cyber-agent-engine          # core: coordinator (API) + structured agents, no GPU
 pip install cyber-agent-engine[gpu]     # + loader vLLM/LoRA in-process (torch, vllm, unsloth)
 ```
 
@@ -186,11 +186,11 @@ Starts the real-time interface on port 8080 (checkpoint visualization and approv
 ### Running the coordinator
 
 ```bash
-export COORDINATOR_API_KEY=...            # clé d'auth (obligatoire)
-export COORDINATOR_SESSION_KEY=...        # clé Fernet base64 (obligatoire)
-export COORDINATOR_POLICY_FILE=policy.yml # règles (obligatoire ; cf. policy.example.yml)
-export AGENT_SERVER_URL=http://localhost:3000   # serveur d'agents
-cyber-coordinator                          # lance uvicorn sur COORDINATOR_HOST:PORT (défaut 127.0.0.1:8080)
+export COORDINATOR_API_KEY=...            # authentication key (required)
+export COORDINATOR_SESSION_KEY=...        # Fernet base64 key (required)
+export COORDINATOR_POLICY_FILE=policy.yml # rules (required; see policy.example.yml)
+export AGENT_SERVER_URL=http://localhost:3000   # agent server
+cyber-coordinator                          # start uvicorn on COORDINATOR_HOST:PORT (default 127.0.0.1:8080)
 ```
 
 The coordinator refuses to start if a mandatory variable is missing or if
