@@ -45,7 +45,8 @@ strict = true
 # contrôleur analogue au gating ruff du sous-projet A.
 follow_imports = "silent"
 files = ["core", "coordinator/agent_call.py", "coordinator/proposer.py",
-         "coordinator/catalog_builder.py", "coordinator/session.py",
+         "coordinator/catalog_builder.py", "coordinator/config.py",
+         "coordinator/session.py",
          "coordinator/loop.py", "coordinator/app.py", "coordinator/extractor.py",
          "agents/contracts.py", "agents/coercion.py", "agents/manifest.py"]
 
