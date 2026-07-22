@@ -33,6 +33,27 @@ class CoordinatorConfig:
     agent_server_url: str
     agent_server_sock: str
     agent_server_key: str
+    agent_servers: list[str]
+    audit_max_bytes: int
+    audit_backups: int
+
+
+def _parse_agent_servers(env: Mapping[str, str]) -> list[str]:
+    """Parse AGENT_SERVERS (CSV) ou repli sur AGENT_SERVER_URL.
+
+    Si AGENT_SERVERS est fourni et non-vide après trim, le scinde par virgule
+    et retourne les URL non-vides avec trim des espaces. Sinon utilise AGENT_SERVER_URL.
+
+    Args:
+        env: Mapping clé-valeur (typiquement os.environ)
+
+    Returns:
+        Liste d'URL de serveurs d'agents
+    """
+    raw = env.get("AGENT_SERVERS", "").strip()
+    if raw:
+        return [u.strip() for u in raw.split(",") if u.strip()]
+    return [env.get("AGENT_SERVER_URL", "http://localhost:3000")]
 
 
 def load_config(env: Mapping[str, str]) -> CoordinatorConfig:
@@ -71,4 +92,7 @@ def load_config(env: Mapping[str, str]) -> CoordinatorConfig:
         agent_server_url=env.get("AGENT_SERVER_URL", "http://localhost:3000"),
         agent_server_sock=env.get("AGENT_SERVER_SOCK", ""),
         agent_server_key=env.get("AGENT_SERVER_KEY", ""),
+        agent_servers=_parse_agent_servers(env),
+        audit_max_bytes=int(env.get("COORDINATOR_AUDIT_MAX_BYTES", "104857600")),
+        audit_backups=int(env.get("COORDINATOR_AUDIT_BACKUPS", "5")),
     )
