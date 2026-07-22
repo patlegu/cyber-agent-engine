@@ -137,22 +137,29 @@ en mode serveur, LocalAI, et l'endpoint `/v1` d'Ollama — aucun GPU requis côt
 
 ### Agents LoRA (chemin NL optionnel)
 
-Le chemin de confiance (exécution structurée) ne requiert aucun modèle. Pour
-activer l'interprétation en langage naturel par LoRA :
+Le chemin de confiance (exécution structurée via `execute_direct`) ne requiert
+aucun modèle et reste toujours disponible.
 
-1. Télécharger les LoRA publics depuis HuggingFace (opnsense/wireguard/crowdsec).
+Pour activer l'interprétation en langage naturel par LoRA :
+
+1. Télécharger les LoRA publics depuis HuggingFace (opnsense, wireguard, crowdsec).
 2. Les servir derrière un endpoint OpenAI-compatible (vLLM multi-LoRA, llama.cpp…),
    le nom de modèle = nom du LoRA.
-3. Configurer l'agent :
 
-| Variable                | Rôle                                                |
-|-------------------------|-----------------------------------------------------|
-| `AGENT_INFER_BASE_URL`  | endpoint OpenAI-compatible servant les LoRA         |
-| `AGENT_INFER_API_KEY`   | clé/token de cet endpoint                           |
-| `AGENT_LORA_MODELS`     | mapping outil→nom de LoRA (ou `CROWDSEC_LORA_MODEL=…`) |
+L'agent reçoit ce backend via les paramètres injectés au niveau du constructeur
+`ToolAgent` :
 
-Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite ;
-le chemin structuré (`execute_direct`) reste toujours disponible.
+- `openai_client` : client HTTP OpenAI-compatible (`OpenAICompatClient`)
+- `lora_model` : nom du LoRA à utiliser
+
+**Note :** Le câblage automatique depuis des variables d'environnement
+(`AGENT_INFER_BASE_URL`, `AGENT_INFER_API_KEY`, `AGENT_LORA_MODELS`) est
+prévu au niveau de l'assemblage runtime (sous-projet D) et n'est pas encore
+actif dans ce paquet. Ces noms de variables restent découvrables pour la
+documentation, mais ne sont pas lus par le code de ce module.
+
+Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
+(`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
 
 ## Démarrage
 
