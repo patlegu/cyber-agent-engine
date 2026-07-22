@@ -265,6 +265,11 @@ app.add_middleware(
 async def read_index():
     return FileResponse("dashboard/templates/index.html")
 
+@app.get("/health")
+async def health() -> dict[str, str]:
+    """Sonde de santé non authentifiée pour l'orchestration conteneur."""
+    return {"status": "ok"}
+
 @app.post("/agent/execute", dependencies=[Depends(verify_api_key)])
 async def execute_command(request: AgentExecuteRequest) -> AgentExecuteResponse:
     """
