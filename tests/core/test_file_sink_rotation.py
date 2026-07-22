@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from core.audit.file_sink import FileAuditSink
 from core.audit.sink import AuditEntry
 
@@ -44,3 +46,16 @@ def test_rotation_bounds_disk(tmp_path: Path):
             assert obj["args"]["ip"].startswith("IP_")
     # la dernière entrée écrite est dans le fichier courant
     assert f"IP_{ROTATION_ENTRIES - 1}" in p.read_text(encoding="utf-8")
+
+
+def test_rotation_reraises_on_write_error(tmp_path, monkeypatch):
+    p = tmp_path / "audit.jsonl"
+    sink = FileAuditSink(p, max_bytes=1000, backup_count=1)
+    handler = sink._logger.handlers[0]  # accès privé assumé pour le test
+
+    def _boom(*_a, **_k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(handler.stream, "write", _boom)
+    with pytest.raises(OSError):
+        sink.write(_entry(1))

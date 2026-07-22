@@ -17,6 +17,19 @@ from pathlib import Path
 from core.audit.sink import AuditEntry
 
 
+class _RaisingRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """RotatingFileHandler qui PROPAGE les erreurs d'écriture au lieu de les avaler.
+
+    Le comportement par défaut de logging (handleError → stderr, sans lever) rendrait
+    l'audit best-effort en cas d'erreur d'E/S ; on rétablit le fail-closed : une entrée
+    d'audit qui ne peut pas être écrite fait échouer l'opération (cohérent avec le mode
+    non borné qui laisse remonter l'erreur de fh.write).
+    """
+
+    def handleError(self, record: logging.LogRecord) -> None:
+        raise  # noqa: PLE0704 -- ré-lève l'exception active (appelé depuis le except d'emit)
+
+
 class FileAuditSink:
     """Écrit chaque entrée d'audit sur une ligne JSON, avec rotation optionnelle."""
 
@@ -25,7 +38,7 @@ class FileAuditSink:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._logger: logging.Logger | None = None
         if max_bytes > 0:
-            handler = logging.handlers.RotatingFileHandler(
+            handler = _RaisingRotatingFileHandler(
                 self._path, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
             )
             logger = logging.getLogger(f"cyber_audit.{self._path}")
