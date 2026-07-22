@@ -40,7 +40,7 @@ def _cfg(tmp_path: Path, policy_text: str) -> CoordinatorConfig:
         auth_secret="s", session_key=Fernet.generate_key(), policy_file=pol,
         audit_file=tmp_path / "audit.jsonl", session_dir=tmp_path / "sessions",
         host="127.0.0.1", port=8080, agent_server_url="http://x", agent_server_sock="",
-        agent_server_key="",
+        agent_server_key="", agent_servers=["http://x"], audit_max_bytes=0, audit_backups=0,
     )
 
 
@@ -60,7 +60,7 @@ async def test_assemble_loop_builds_a_working_loop(tmp_path: Path):
         json.dumps({"action": {"capability": "crowdsec.ban_ip", "args": {"ip": "IP_1"}}}),
         json.dumps({"final": "ok"}),
     ])
-    loop = await assemble_loop(cfg, _FakeClient(), llm)
+    loop = await assemble_loop(cfg, [_FakeClient()], llm)
     assert isinstance(loop, GatedLoop)
     res = await loop.handle("banni 203.0.113.9")
     assert isinstance(res, Suspended)
@@ -72,7 +72,7 @@ async def test_invalid_policy_refuses(tmp_path: Path):
     # glob ne couvrant aucune capacité connue -> load_policy lève -> assemble échoue
     cfg = _cfg(tmp_path, "rules:\n  - match: {capability: 'inconnu.*'}\n    effect: allow\n")
     with pytest.raises(PolicyError):
-        await assemble_loop(cfg, _FakeClient(), _FakeLLM([]))
+        await assemble_loop(cfg, [_FakeClient()], _FakeLLM([]))
 
 
 @pytest.mark.asyncio
@@ -86,4 +86,29 @@ async def test_no_agents_discovered_refuses(tmp_path: Path):
 
     cfg = _cfg(tmp_path, "rules: []\n")
     with pytest.raises(AssemblyError):
-        await assemble_loop(cfg, _Empty(), _FakeLLM([]))
+        await assemble_loop(cfg, [_Empty()], _FakeLLM([]))
+
+
+_CAPS_B = {"agents": [{"name": "opnsense", "tool_name": "opnsense", "functions":
+    __import__("agents.opnsense_agent", fromlist=["OPNsenseAgent"]).OPNsenseAgent(
+        model_path=None).get_capabilities()}]}
+
+
+class _FakeClientB:
+    async def get_capabilities(self): return _CAPS_B
+    async def execute_structured(self, function, args): return {"ok": function}
+
+
+@pytest.mark.asyncio
+async def test_two_servers_routes_each_agent(tmp_path: Path):
+    policy = "rules:\n  - match: {capability: 'crowdsec.get_metrics'}\n    effect: allow\n"
+    cfg = _cfg(tmp_path, policy)
+    loop = await assemble_loop(cfg, [_FakeClient(), _FakeClientB()], _FakeLLM([]))
+    assert isinstance(loop, GatedLoop)  # crowdsec (serveur A) + opnsense (serveur B) fusionnés
+
+
+@pytest.mark.asyncio
+async def test_agent_name_collision_across_servers_refuses(tmp_path: Path):
+    cfg = _cfg(tmp_path, "rules: []\n")
+    with pytest.raises(AssemblyError):
+        await assemble_loop(cfg, [_FakeClient(), _FakeClient()], _FakeLLM([]))

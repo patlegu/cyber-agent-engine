@@ -41,24 +41,33 @@ def discover_agents(caps: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
 
 
 async def assemble_loop(
-    config: CoordinatorConfig, agent_client: AgentClientLike, llm: ChatLLM
+    config: CoordinatorConfig, agent_clients: list[AgentClientLike], llm: ChatLLM
 ) -> GatedLoop:
-    """Assemble une `GatedLoop` prête à l'emploi depuis la config et un client d'agent.
+    """Assemble une `GatedLoop` depuis la config et une liste de clients d'agent.
 
-    Découvre les agents joignables (`/capabilities`), construit le catalogue
-    (manifestes déclarés + conformance live pour C), charge la politique
-    (fail-closed sur règle/glob invalide) et câble les composants (audit,
-    sessions, approbations, proposer LLM, extracteur regex).
+    Interroge le `/capabilities` de chaque serveur, fusionne les agents et route
+    chaque agent vers le client qui l'héberge. Deux serveurs exposant le même nom
+    d'agent → `AssemblyError` (routage ambigu). Construit le catalogue (conformance
+    C), charge la politique (fail-closed), câble l'audit borné et les composants.
 
     Raises:
-        AssemblyError: aucun agent découvert sur le serveur d'agents.
-        ManifestConformanceError: drift entre le manifeste déclaré et le live.
+        AssemblyError: aucun agent découvert, ou collision de nom d'agent.
+        ManifestConformanceError: drift manifeste↔live.
         PolicyError: règle malformée ou glob ne couvrant aucune capacité connue.
     """
-    caps = await agent_client.get_capabilities()
-    live = discover_agents(caps)
+    live: dict[str, list[dict[str, Any]]] = {}
+    agent_to_client: dict[str, AgentClientLike] = {}
+    for client in agent_clients:
+        caps = await client.get_capabilities()
+        for name, funcs in discover_agents(caps).items():
+            if name in agent_to_client:
+                raise AssemblyError(
+                    f"agent '{name}' exposé par plusieurs serveurs (routage ambigu)"
+                )
+            live[name] = funcs
+            agent_to_client[name] = client
     if not live:
-        raise AssemblyError("aucun agent découvert sur le serveur d'agents")
+        raise AssemblyError("aucun agent découvert sur les serveurs d'agents")
     catalog = await build_catalog(list(live), live)  # conformance C ; drift → refus
     raw = yaml.safe_load(config.policy_file.read_text(encoding="utf-8")) or {}
     policy = load_policy(raw.get("rules", []), catalog)  # fail-closed sur règle/glob invalide
@@ -66,10 +75,14 @@ async def assemble_loop(
         proposer=LlmProposer(llm=llm, catalog=catalog),
         catalog=catalog,
         policy=policy,
-        sink=FileAuditSink(config.audit_file),
+        sink=FileAuditSink(
+            config.audit_file,
+            max_bytes=config.audit_max_bytes,
+            backup_count=config.audit_backups,
+        ),
         approvals=ApprovalStore(),
         sessions=EncryptedFileSessionStore(config.session_dir, config.session_key),
-        call=make_agent_call({name: agent_client for name in live}),
+        call=make_agent_call(agent_to_client),
         extract=build_regex_extractor(),
         clock=time.time,
         id_factory=lambda: uuid4().hex,

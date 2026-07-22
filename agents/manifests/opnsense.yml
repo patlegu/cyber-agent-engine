@@ -1,0 +1,208 @@
+# agents/manifests/opnsense.yml
+# Capacités déclarées de l'agent OPNsense (source de vérité pour catalogue + conformance).
+agent: opnsense
+capabilities:
+  - name: block_ip
+    required_args: []
+  - name: unblock_ip
+    required_args: []
+  - name: add_filter_rule
+    required_args: [interface]
+  - name: del_filter_rule
+    required_args: [uuid]
+  - name: set_filter_rule
+    required_args: [uuid]
+  - name: get_filter_rule
+    required_args: []
+  - name: toggle_filter_rule
+    required_args: [uuid, enabled]
+  - name: move_filter_rule
+    required_args: [uuid, before_uuid]
+  - name: add_alias
+    required_args: [name, type, content]
+  - name: del_alias
+    required_args: [uuid]
+  - name: set_alias
+    required_args: [uuid]
+  - name: get_alias
+    required_args: []
+  - name: import_alias
+    required_args: [uuid, content]
+  - name: add_to_alias
+    required_args: [alias, address]
+  - name: del_from_alias
+    required_args: [alias, address]
+  - name: flush_alias
+    required_args: [alias]
+  - name: list_alias_content
+    required_args: [alias]
+  - name: find_alias_references
+    required_args: [alias]
+  - name: add_nat_outbound
+    required_args: [interface, source]
+  - name: del_nat_outbound
+    required_args: [uuid]
+  - name: add_nat_port_forward
+    required_args: [interface, protocol, destination_port, redirect_target_ip, redirect_target_port]
+  - name: add_nat_one_to_one
+    required_args: [interface, external_ip, internal_ip]
+  - name: del_nat_one_to_one
+    required_args: [uuid]
+  - name: get_firewall_log
+    required_args: []
+  - name: get_firewall_states
+    required_args: []
+  - name: kill_firewall_states
+    required_args: [filter]
+  - name: flush_firewall_states
+    required_args: []
+  - name: get_firewall_statistics
+    required_args: []
+  - name: get_rule_statistics
+    required_args: []
+  - name: get_system_status
+    required_args: []
+  - name: ping_host
+    required_args: [host]
+  - name: traceroute_host
+    required_args: [host]
+  - name: port_probe
+    required_args: [host, port]
+  - name: apply_firewall_changes
+    required_args: []
+  - name: cancel_firewall_rollback
+    required_args: []
+  - name: revert_firewall_changes
+    required_args: []
+  - name: create_firewall_savepoint
+    required_args: []
+  - name: get_interface_list
+    required_args: []
+  - name: backup_configuration
+    required_args: []
+  - name: list_restore_points
+    required_args: []
+  - name: revert_to_restore_point
+    required_args: [revision_id]
+  - name: create_restore_point
+    required_args: []
+  - name: add_category
+    required_args: [name]
+  - name: del_category
+    required_args: [uuid]
+  - name: list_categories
+    required_args: []
+  - name: update_bogons
+    required_args: []
+  - name: list_geoip_countries
+    required_args: []
+  - name: get_geoip_database
+    required_args: []
+  - name: check_updates
+    required_args: []
+  - name: get_upgrade_status
+    required_args: []
+  - name: upgrade_firmware
+    required_args: []
+  - name: add_dns_override
+    required_args: [hostname, domain, ip]
+  - name: list_dns_overrides
+    required_args: []
+  - name: del_dns_override
+    required_args: [hostname, domain]
+  - name: manage_dns_blocklist
+    required_args: []
+  - name: search_dns_queries
+    required_args: []
+  - name: get_dhcp_leases
+    required_args: []
+  - name: add_static_mapping
+    required_args: [mac, ip, hostname]
+  - name: get_ids_status
+    required_args: [_arguments]
+  - name: query_ids_alerts
+    required_args: [arguments]
+  - name: toggle_ids_rule
+    required_args: [arguments]
+  - name: get_monit_status
+    required_args: [_arguments]
+  - name: restart_monit_service
+    required_args: [arguments]
+  - name: schedule_cron_job
+    required_args: [arguments]
+  - name: toggle_cron_job
+    required_args: [arguments]
+  - name: get_cron_jobs
+    required_args: [_arguments]
+  - name: get_static_routes
+    required_args: [_arguments]
+  - name: add_static_route
+    required_args: [arguments]
+  - name: del_static_route
+    required_args: [arguments]
+  - name: list_ids_rulesets
+    required_args: []
+  - name: toggle_ids_ruleset
+    required_args: [filename, enabled]
+  - name: update_ids_rules
+    required_args: []
+  - name: start_ids
+    required_args: []
+  - name: stop_ids
+    required_args: []
+  - name: restart_ids
+    required_args: []
+  - name: get_traffic_statistics
+    required_args: []
+  - name: list_traffic_pipes
+    required_args: []
+  - name: add_traffic_pipe
+    required_args: [description, bandwidth]
+  - name: del_traffic_pipe
+    required_args: [uuid]
+  - name: list_traffic_queues
+    required_args: []
+  - name: add_traffic_queue
+    required_args: [description, pipe]
+  - name: del_traffic_queue
+    required_args: [uuid]
+  - name: list_traffic_rules
+    required_args: []
+  - name: add_traffic_rule
+    required_args: [description, sequence, target]
+  - name: del_traffic_rule
+    required_args: [uuid]
+  - name: apply_traffic_changes
+    required_args: []
+  - name: get_acme_status
+    required_args: []
+  - name: list_acme_certificates
+    required_args: []
+  - name: sign_acme_certificate
+    required_args: [uuid]
+  - name: update_acme_certificate
+    required_args: [uuid]
+  - name: revoke_acme_certificate
+    required_args: [uuid]
+  - name: list_acme_accounts
+    required_args: []
+  - name: get_ipsec_status
+    required_args: []
+  - name: list_ipsec_connections
+    required_args: []
+  - name: toggle_ipsec_connection
+    required_args: [uuid, enabled]
+  - name: list_ipsec_sessions
+    required_args: []
+  - name: connect_ipsec_session
+    required_args: [session_id]
+  - name: disconnect_ipsec_session
+    required_args: [session_id]
+  - name: list_openvpn_instances
+    required_args: []
+  - name: toggle_openvpn_instance
+    required_args: [uuid, enabled]
+  - name: list_openvpn_sessions
+    required_args: []
+  - name: kill_openvpn_session
+    required_args: [common_name, address]
