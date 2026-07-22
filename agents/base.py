@@ -1015,10 +1015,15 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
     async def _infer_with_simulation(self, user_request: str) -> FunctionCall:
         """
         Simulation d'inférence (fallback).
-        
+
+        NE DOIT JAMAIS être appelée depuis un chemin d'erreur d'inférence :
+        cela réintroduirait la dette de simulation silencieuse corrigée dans
+        _infer_function (échec fermé via NoInferenceBackend). Affordance
+        explicite dev/CI uniquement — aucun appelant en production.
+
         Args:
             user_request: Requête utilisateur
-            
+
         Returns:
             FunctionCall
         """

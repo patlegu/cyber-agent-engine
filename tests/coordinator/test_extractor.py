@@ -35,3 +35,18 @@ def test_dedupe_and_order():
 def test_no_false_positive_on_plain_words():
     out = extract("bonjour le monde")
     assert all(not v for v in out.values())
+
+
+def test_ipv6_compressed():
+    assert "2001:db8::42" in extract("bloque 2001:db8::42")["IP_ADDRESS"]
+
+
+def test_ipv6_does_not_eat_mac():
+    out = extract("hôte 00:1b:44:11:3a:b7 et 2001:db8::1")
+    assert out["MAC_ADDRESS"] == ["00:1b:44:11:3a:b7"]
+    assert "2001:db8::1" in out["IP_ADDRESS"]
+
+
+def test_uppercase_hash():
+    out = extract("hash D41D8CD98F00B204E9800998ECF8427E")
+    assert "D41D8CD98F00B204E9800998ECF8427E" in out["HASH"]

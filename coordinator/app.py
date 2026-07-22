@@ -108,15 +108,24 @@ def create_default_app() -> FastAPI:
         # ToolAgentClient/CoordinatorLLM (autres sous-projets) ne sont pas
         # entièrement typés — no-untyped-call ignoré ponctuellement ici plutôt
         # que d'étendre le périmètre mypy strict à des modules hors scope.
+        #
+        # Le try démarre dès l'ouverture du client : si llm.init() ou
+        # assemble_loop() lève, le client doit quand même être fermé (sinon
+        # fuite de socket). llm n'est fermé que s'il a été initialisé avec
+        # succès — un échec de llm.init() ne doit pas appeler shutdown() sur
+        # un LLM à moitié construit.
         await client.__aenter__()  # type: ignore[no-untyped-call]
         llm = CoordinatorLLM()  # type: ignore[no-untyped-call]
-        await llm.init()
+        llm_initialized = False
         try:
+            await llm.init()
+            llm_initialized = True
             app.state.loop = await assemble_loop(config, client, llm)
             yield
         finally:
             await client.__aexit__(None, None, None)  # type: ignore[no-untyped-call]
-            await llm.shutdown()
+            if llm_initialized:
+                await llm.shutdown()
 
     app = FastAPI(title="Cyber Coordinator", version="2.0", lifespan=_lifespan)
     _register_routes(app, config.auth_secret)
