@@ -106,6 +106,54 @@ async def test_resume_expired_session_fails():
 
 
 @pytest.mark.asyncio
+async def test_resume_preserves_results_across_suspension():
+    # pas 1 : capacité `allow` exécutée immédiatement ; pas 2 : capacité `approve` → suspend
+    proposer = _ScriptedProposer([
+        Act(intention=Intention(capability="crowdsec.get_metrics", args={})),
+        Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"})),
+        Finish(summary="fait"),
+    ])
+    policy = [
+        Rule(match=Match(capability="crowdsec.get_metrics"), effect="allow"),
+        Rule(match=Match(capability="crowdsec.ban_ip"), effect="approve"),
+    ]
+    sessions = MemorySessionStore()
+    loop = _loop(proposer, policy, sessions=sessions)
+    res = await loop.handle("montre les métriques puis banni 203.0.113.9")
+    assert isinstance(res, Suspended)
+    loop._approvals.approve(res.approval_id, loop._approvals.get(res.approval_id).intention_hash)
+    res2 = await loop.resume(res.approval_id)
+    assert isinstance(res2, Completed)
+    expected_steps = 2
+    assert len(res2.results) == expected_steps  # le résultat du pas allow ne doit pas être perdu
+
+
+@pytest.mark.asyncio
+async def test_resume_twice_is_anti_replay_and_calls_agent_once():
+    calls = {"n": 0}
+
+    async def _counting_call(cap, args):
+        calls["n"] += 1
+        return {"ok": cap, "args": args}
+
+    proposer = _ScriptedProposer([
+        Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"})),
+        Finish(summary="banni"),
+    ])
+    policy = [Rule(match=Match(capability="crowdsec.ban_ip"), effect="approve")]
+    sessions = MemorySessionStore()
+    loop = _loop(proposer, policy, sessions=sessions, call=_counting_call)
+    res = await loop.handle("banni 203.0.113.9")
+    assert isinstance(res, Suspended)
+    loop._approvals.approve(res.approval_id, loop._approvals.get(res.approval_id).intention_hash)
+    res2 = await loop.resume(res.approval_id)
+    assert isinstance(res2, Completed)
+    res3 = await loop.resume(res.approval_id)
+    assert isinstance(res3, Failed)
+    assert calls["n"] == 1
+
+
+@pytest.mark.asyncio
 async def test_llm_never_sees_real_ip():
     seen = []
 

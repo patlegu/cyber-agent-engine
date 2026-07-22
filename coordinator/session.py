@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from cryptography.fernet import Fernet
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 Clock = Callable[[], float]
 
@@ -32,6 +32,7 @@ class SessionState(BaseModel):
     history: list[str]
     step: int
     expires_at: float
+    results: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class SessionStore(Protocol):

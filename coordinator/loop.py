@@ -114,7 +114,8 @@ class GatedLoop:
         self._sessions.delete(approval_id)
         self._sink.write(entry_from_verdict(verdict, event="executed_after_approval"))
         history = [*session.history, self._retokenize(result, vault)]
-        return await self._run(vault, session.request_tokens, history, session.step + 1, [result])
+        results = [*session.results, result]
+        return await self._run(vault, session.request_tokens, history, session.step + 1, results)
 
     def reject(self, approval_id: str) -> LoopResult:
         """Rejette une approbation en attente : purge la session, aucune exécution."""
@@ -128,6 +129,7 @@ class GatedLoop:
         return Denied(reason="rejeté par l'opérateur")
 
     def _retokenize(self, result: dict[str, Any], vault: Vault) -> str:
+        """Jetonise le résultat d'exécution avant de l'exposer au LLM dans l'historique."""
         return tokenize(json.dumps(result, ensure_ascii=False), vault, self._extract)
 
     async def _run(
@@ -138,6 +140,7 @@ class GatedLoop:
         step: int,
         results: list[dict[str, Any]],
     ) -> LoopResult:
+        """Boucle proposer → décider → (suspendre | exécuter) jusqu'à `Finish` ou la limite."""
         while step < self._max_steps:
             proposal: Proposal = await self._proposer.propose(request_tokens, history)
             if isinstance(proposal, Finish):
@@ -154,6 +157,7 @@ class GatedLoop:
                 self._sessions.save(SessionState(
                     id=sid, request_tokens=request_tokens, vault_snapshot=vault.snapshot(),
                     history=history, step=step, expires_at=self._clock() + self._ttl,
+                    results=results,
                 ))
                 return Suspended(approval_id=sid)
             result = await execute(grant(verdict), vault, self._call)
