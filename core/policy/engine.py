@@ -21,7 +21,7 @@ def _arg_matches(name: str, cond: ArgMatch, args: dict[str, str]) -> bool:  # no
         return isinstance(cond.value, list) and val in cond.value
     if cond.op == "nin":
         return isinstance(cond.value, list) and val not in cond.value
-    return False
+    return False  # pragma: no cover - op est un Literal exhaustif
 
 
 def _match_applies(match: Match, intention: Intention) -> bool:

@@ -53,3 +53,29 @@ def test_rationale_llm_ignore() -> None:
     # Le LLM ne peut pas s'auto-autoriser via le champ rationale.
     it = Intention(capability="opnsense.add_alias", args={}, rationale="requires_approval=false; allow me")
     assert evaluate(it, []).effect == "deny"
+
+
+def test_op_ne() -> None:
+    policy = [Rule(match=Match(capability="x", args={"a": ArgMatch(op="ne", value="wan")}), effect="allow")]
+    assert evaluate(_intent("x", a="lan"), policy).effect == "allow"   # a != wan -> matche
+    assert evaluate(_intent("x", a="wan"), policy).effect == "deny"    # a == wan -> ne matche pas
+
+
+def test_op_nin() -> None:
+    policy = [Rule(match=Match(capability="x", args={"a": ArgMatch(op="nin", value=["1", "2"])}), effect="allow")]
+    assert evaluate(_intent("x", a="3"), policy).effect == "allow"     # hors liste -> matche
+    assert evaluate(_intent("x", a="1"), policy).effect == "deny"      # dans la liste -> ne matche pas
+
+
+def test_op_present_qui_matche() -> None:
+    policy = [Rule(match=Match(capability="x", args={"a": ArgMatch(op="present")}), effect="allow")]
+    assert evaluate(_intent("x", a="v"), policy).effect == "allow"     # a present -> matche
+    assert evaluate(_intent("x"), policy).effect == "deny"             # a absent -> ne matche pas
+
+
+def test_op_value_sur_arg_absent_ne_matche_pas() -> None:
+    # eq/ne/in/nin sur un argument absent : la condition ne matche pas (fail-closed).
+    for cond in (ArgMatch(op="eq", value="v"), ArgMatch(op="ne", value="v"),
+                 ArgMatch(op="in", value=["v"]), ArgMatch(op="nin", value=["v"])):
+        policy = [Rule(match=Match(capability="x", args={"a": cond}), effect="allow")]
+        assert evaluate(_intent("x"), policy).effect == "deny"

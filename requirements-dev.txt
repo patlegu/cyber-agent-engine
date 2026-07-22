@@ -5,3 +5,4 @@ mypy>=1.11,<2
 pydantic>=2.6,<3
 fastapi>=0.110,<1
 httpx>=0.25,<1
+pytest-cov>=4,<7
