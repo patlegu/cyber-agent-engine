@@ -25,12 +25,17 @@ class AuditEntry(BaseModel):
     actor: str = "coordinator"
 
 
-def entry_from_verdict(verdict: Verdict, event: str, actor: str = "coordinator") -> AuditEntry:
+def entry_from_verdict(
+    verdict: Verdict, event: str, actor: str = "coordinator", rule_reason: str | None = None
+) -> AuditEntry:
+    reason = rule_reason if rule_reason is not None else (
+        verdict.matched_rule.reason if verdict.matched_rule else None
+    )
     return AuditEntry(
         event=event,
         capability=verdict.intention.capability,
         effect=verdict.effect,
-        rule_reason=(verdict.matched_rule.reason if verdict.matched_rule else None),
+        rule_reason=reason,
         args=verdict.intention.args,
         actor=actor,
     )

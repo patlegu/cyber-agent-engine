@@ -107,7 +107,9 @@ class GatedLoop:
         try:
             authorized = grant_approved(approval)
         except NotAuthorized:
-            self._sink.write(entry_from_verdict(verdict, event="resume_refuse"))
+            self._sink.write(entry_from_verdict(
+                verdict, event="resume_refuse", rule_reason=session.rule_reason
+            ))
             return Denied(reason=f"approbation en état {approval.state}")
         # Consommer l'approbation AVANT d'exécuter : anti-rejeu fail-closed. Une panne
         # transitoire de l'agent pendant `execute` ne doit jamais laisser une session
@@ -118,7 +120,9 @@ class GatedLoop:
             result = await execute(authorized, vault, self._call)
         except Exception as exc:  # frontière d'exécution : jamais de 500 non géré
             return Failed(reason=f"execution: {type(exc).__name__}")
-        self._sink.write(entry_from_verdict(verdict, event="executed_after_approval"))
+        self._sink.write(entry_from_verdict(
+            verdict, event="executed_after_approval", rule_reason=session.rule_reason
+        ))
         history = [*session.history, self._retokenize(result, vault)]
         results = [*session.results, result]
         return await self._run(vault, session.request_tokens, history, session.step + 1, results)
@@ -128,10 +132,12 @@ class GatedLoop:
         approval = self._approvals.get(approval_id)
         if approval is None:
             return Failed(reason="approbation inconnue")
+        session = self._sessions.get(approval_id, now=self._clock())
+        rule_reason = session.rule_reason if session is not None else None
         self._approvals.reject(approval_id)
         self._sessions.delete(approval_id)
         verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
-        self._sink.write(entry_from_verdict(verdict, event="rejected"))
+        self._sink.write(entry_from_verdict(verdict, event="rejected", rule_reason=rule_reason))
         return Denied(reason="rejeté par l'opérateur")
 
     def _retokenize(self, result: dict[str, Any], vault: Vault) -> str:
@@ -178,6 +184,7 @@ class GatedLoop:
                     id=sid, request_tokens=request_tokens, vault_snapshot=vault.snapshot(),
                     history=history, step=step, expires_at=self._clock() + self._ttl,
                     results=results,
+                    rule_reason=(verdict.matched_rule.reason if verdict.matched_rule else None),
                 ))
                 return Suspended(approval_id=sid)
             try:

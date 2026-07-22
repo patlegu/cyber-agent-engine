@@ -33,6 +33,7 @@ class SessionState(BaseModel):
     step: int
     expires_at: float
     results: list[dict[str, Any]] = Field(default_factory=list)
+    rule_reason: str | None = None
 
 
 class SessionStore(Protocol):
