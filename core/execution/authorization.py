@@ -8,6 +8,7 @@ Fabriquer un ``Authorized`` hors de ces fabriques est impossible (sentinelle pri
 
 from __future__ import annotations
 
+from core.approval.store import Approval
 from core.policy.models import Intention, Verdict
 
 _GRANT = object()  # sentinelle privée au module
@@ -37,3 +38,9 @@ def grant(verdict: Verdict) -> Authorized:
 def _grant_intention(intention: Intention) -> Authorized:
     """Fabrique interne réservée au flux d'approbation (Task 7)."""
     return Authorized(intention, _GRANT)
+
+
+def grant_approved(approval: Approval) -> Authorized:
+    if approval.state != "approved":
+        raise NotAuthorized(f"approbation {approval.id} en état {approval.state}")
+    return _grant_intention(approval.intention)
