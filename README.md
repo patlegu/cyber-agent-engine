@@ -113,6 +113,54 @@ TOOL_AGENT_GPU_UTIL=0.45
 AGENT_API_KEY=<clé-forte-aléatoire>
 ```
 
+## Déploiement & backends
+
+### Installation
+
+```bash
+pip install cyber-agent-engine          # cœur : coordinateur (API) + agents structurés, sans GPU
+pip install cyber-agent-engine[gpu]     # + loader vLLM/LoRA in-process (torch, vllm, unsloth)
+```
+
+### Backend du coordinateur (LLM de raisonnement)
+
+| Variable                | Rôle                                                        |
+|-------------------------|-------------------------------------------------------------|
+| `COORDINATOR_BACKEND`   | `anthropic` (défaut) \| `openai` \| `vllm` (\[gpu\]) \| `ollama` |
+| `ANTHROPIC_API_KEY`     | clé API (backend anthropic)                                 |
+| `OPENAI_BASE_URL`       | endpoint OpenAI-compatible (OpenRouter, vLLM-HTTP, llama.cpp-server, Ollama `/v1`) |
+| `OPENAI_API_KEY`        | clé/token du endpoint openai-compatible                     |
+
+Un endpoint **OpenAI-compatible** couvre OpenRouter, un serveur vLLM, llama.cpp
+en mode serveur, LocalAI, et l'endpoint `/v1` d'Ollama — aucun GPU requis côté
+`cyber-agent-engine`.
+
+### Agents LoRA (chemin NL optionnel)
+
+Le chemin de confiance (exécution structurée via `execute_direct`) ne requiert
+aucun modèle et reste toujours disponible.
+
+Pour activer l'interprétation en langage naturel par LoRA :
+
+1. Télécharger les LoRA publics depuis HuggingFace (opnsense, wireguard, crowdsec).
+2. Les servir derrière un endpoint OpenAI-compatible (vLLM multi-LoRA, llama.cpp…),
+   le nom de modèle = nom du LoRA.
+
+L'agent reçoit ce backend via les paramètres injectés au niveau du constructeur
+`ToolAgent` :
+
+- `openai_client` : client HTTP OpenAI-compatible (`OpenAICompatClient`)
+- `lora_model` : nom du LoRA à utiliser
+
+**Note :** Le câblage automatique depuis des variables d'environnement
+(`AGENT_INFER_BASE_URL`, `AGENT_INFER_API_KEY`, `AGENT_LORA_MODELS`) est
+prévu au niveau de l'assemblage runtime (sous-projet D) et n'est pas encore
+actif dans ce paquet. Ces noms de variables restent découvrables pour la
+documentation, mais ne sont pas lus par le code de ce module.
+
+Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
+(`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
+
 ## Démarrage
 
 ```bash
@@ -120,7 +168,7 @@ AGENT_API_KEY=<clé-forte-aléatoire>
 python server.py
 
 # Coordinateur (port 3001)
-python -m coordinator.server
+# L'entrypoint runtime du coordinateur est fourni au sous-projet D (assemblage runtime).
 
 # Dashboard (port 8080)
 python dashboard/app.py

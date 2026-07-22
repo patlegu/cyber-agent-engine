@@ -15,13 +15,13 @@ import json
 import os
 
 from .errors import ErrorCode
-
-try:
-    from factory.clients.native_vllm_client import TOOL_CALL_SCHEMA
-except ImportError:
-    TOOL_CALL_SCHEMA = None
+from clients.tool_call_schema import TOOL_CALL_SCHEMA
 
 logger = logging.getLogger(__name__)
+
+
+class NoInferenceBackend(RuntimeError):
+    """Aucun backend d'inférence NL configuré pour cet agent (execute_direct reste dispo)."""
 
 
 @dataclass
@@ -77,13 +77,15 @@ class ToolAgent(ABC):
     system_prompt: str = ""
     chat_format:   str = "phi3"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 -- 5 backends d'inférence enfichables
         self,
         tool_name: str,
         model_path: str,
         api_config: Optional[Dict] = None,
         ollama_config: Optional[Dict] = None,
-        vllm_client: Any = None
+        vllm_client: Any = None,
+        openai_client: Any = None,
+        lora_model: str = "",
     ):
         """
         Initialise l'agent-outil.
@@ -93,17 +95,22 @@ class ToolAgent(ABC):
             model_path: Chemin vers le LoRA adapté à cet outil (local)
             api_config: Configuration API de l'outil (optionnel)
             ollama_config: Config Ollama override {"model": "...", "url": "..."}
+            openai_client: Client HTTP OpenAI-compatible (OpenAICompatClient) pour
+                servir le LoRA via un endpoint /chat/completions (ex: vLLM multi-LoRA)
+            lora_model: Nom du LoRA à passer comme `model` à openai_client
         """
         self.tool_name = tool_name
         self.model_path = model_path
         self.api_config = api_config or {}
         self.ollama_config = ollama_config
         self.vllm_client = vllm_client
-        
+        self.openai_client = openai_client
+        self.lora_model = lora_model
+
         # Client Ollama (lazy init)
         self.ollama_client = None
         if self.ollama_config and self.ollama_config.get('model'):
-            from factory.clients.ollama_client import OllamaClient
+            from clients.ollama_client import OllamaClient
             self.ollama_client = OllamaClient(
                 base_url=self.ollama_config.get('url', 'http://localhost:11434')
             )
@@ -547,9 +554,20 @@ class ToolAgent(ABC):
             logger.error(f"Erreur inférence vLLM: {e}")
             return await self._infer_with_simulation(user_request)
 
+    async def _infer_with_openai_compat(self, user_request: str) -> "FunctionCall":
+        """Inférence NL via un endpoint OpenAI-compatible servant le LoRA de l'outil."""
+        messages = self._build_chat_messages(user_request)
+        content = await self.openai_client.chat(messages, model=self.lora_model)
+        return self._parse_model_output(content, user_request)
+
     async def _infer_function(self, user_request: str) -> FunctionCall:
         """
         Utilise le LoRA pour inférer quelle fonction appeler.
+
+        Ordre de sélection du backend (le premier configuré gagne) :
+        openai_client → ollama_client → vllm_client → model local (unsloth).
+        Si aucun backend n'est configuré, échoue fermé (NoInferenceBackend) —
+        le chemin structuré execute_direct() reste disponible sans modèle.
 
         Args:
             user_request: Requête utilisateur
@@ -557,22 +575,28 @@ class ToolAgent(ABC):
         Returns:
             FunctionCall avec la fonction et les arguments
         """
-        # Si vLLM client est disponible (Priorité absolue)
-        if self.vllm_client:
-            return await self._infer_with_vllm(user_request)
+        # Si un endpoint OpenAI-compatible est configuré (Priorité absolue)
+        if self.openai_client:
+            return await self._infer_with_openai_compat(user_request)
 
         # Si client Ollama configuré
         if self.ollama_client:
             return await self._infer_with_ollama(user_request)
 
+        # Si vLLM client est disponible
+        if self.vllm_client:
+            return await self._infer_with_vllm(user_request)
+
         # Si le modèle est chargé (Unsloth), utiliser l'inférence LoRA locale
         if self.model is not None and self.tokenizer is not None:
             return await self._infer_with_lora(user_request)
-        
-        # Sinon, utiliser la simulation
-        logger.warning("Inférence LoRA non disponible, utilisation de la simulation")
-        return await self._infer_with_simulation(user_request)
-    
+
+        # Sinon, échouer fermé : pas de simulation silencieuse pour le chemin NL
+        raise NoInferenceBackend(
+            "Aucun backend d'inférence configuré (AGENT_INFER_BASE_URL/ollama/[gpu]). "
+            "Le chemin structuré execute_direct reste disponible sans modèle."
+        )
+
     async def _infer_with_lora(self, user_request: str) -> FunctionCall:
         """
         Inférence avec le modèle LoRA.

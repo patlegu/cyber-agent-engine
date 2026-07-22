@@ -1,34 +1,22 @@
 """Tests du serveur d'agent : auth fail-closed + suppression de la branche CAP v1.
 
-Contexte environnement de test : `conftest.py` (racine, non modifiable ici) mock
-`factory` et `factory.clients` en style *attribut* (`from factory.clients import X`,
-utilisé par `agents/*.py`). `server.py` a besoin en plus d'un import de
-sous-module dédié (`from factory.clients.native_vllm_client import
-NativeVLLMClient`) que ce mock ne couvre pas (pas de `__path__` réel sur le
-module mocké). On complète localement ici, sans toucher au conftest racine.
-
-Par ailleurs, sans le protocole context manager (`with TestClient(...) as c`),
-Starlette ne déclenche pas le `lifespan` de l'application — le dict `agents`
-du serveur reste vide. Faire tourner le vrai `lifespan` (instanciation réelle
-des agents OPNsense/WireGuard/CrowdSec) se heurte au même problème de mock que
-ci-dessus sur d'autres sous-modules `factory.clients.*` (`ollama_client`,
-`pfsense_client`, ...), hors périmètre de cette tâche. Les tests qui ont besoin
-d'un agent pour atteindre le dispatch peuplent donc `server.agents` eux-mêmes
-avec un stub minimal, conformément à la piste de repli du brief de tâche.
+Sans le protocole context manager (`with TestClient(...) as c`), Starlette ne
+déclenche pas le `lifespan` de l'application — le dict `agents` du serveur
+reste vide. Faire tourner le vrai `lifespan` nécessite l'instanciation réelle
+des agents OPNsense/WireGuard/CrowdSec, hors périmètre de cette tâche. Les
+tests qui ont besoin d'un agent pour atteindre le dispatch peuplent donc
+`server.agents` eux-mêmes avec un stub minimal, conformément à la piste de
+repli du brief de tâche.
 """
 
 import importlib
 import json
-import sys
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 
 from agents.base import ToolResult
 from core.auth.api_key import AuthNotConfigured
-
-sys.modules.setdefault("factory.clients.native_vllm_client", MagicMock())
 
 
 def _client(monkeypatch, key="secret"):

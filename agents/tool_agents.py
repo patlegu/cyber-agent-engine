@@ -4,13 +4,13 @@ DEPRECATED: Ce fichier est déprécié depuis janvier 2026.
 Les agents ont été réorganisés en fichiers séparés pour une meilleure maintenabilité.
 
 Utilisez les imports suivants à la place :
-    from factory.agents import OPNsenseAgent
-    from factory.agents import StormshieldAgent
-    from factory.agents import CrowdSecAgent
-    from factory.agents import create_agent
+    from agents import OPNsenseAgent
+    from agents import StormshieldAgent
+    from agents import CrowdSecAgent
+    from agents import create_agent
 
 Structure modulaire :
-    factory/agents/
+    agents/
     ├── __init__.py                # Exports publics
     ├── base.py                    # ToolAgent (classe de base)
     ├── opnsense_agent.py         # OPNsenseAgent (40 fonctions)
@@ -32,7 +32,7 @@ from . import create_agent
 # Avertissement de dépréciation
 warnings.warn(
     "tool_agents.py est déprécié. "
-    "Utilisez 'from factory.agents import OPNsenseAgent' à la place. "
+    "Utilisez 'from agents import OPNsenseAgent' à la place. "
     "Voir docs/AGENTS_REFACTORING.md pour plus de détails.",
     DeprecationWarning,
     stacklevel=2

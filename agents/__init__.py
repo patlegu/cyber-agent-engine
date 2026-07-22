@@ -10,7 +10,7 @@ Chaque agent utilise un LoRA dédié pour décider quelle fonction appeler
 et avec quels paramètres.
 
 Example:
-    >>> from factory.agents import OPNsenseAgent
+    >>> from agents import OPNsenseAgent
     >>> agent = OPNsenseAgent('models/opnsense_lora/adapter')
     >>> result = await agent.execute("Créer une règle pour bloquer 10.0.0.50")
 """

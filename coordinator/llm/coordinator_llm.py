@@ -109,7 +109,8 @@ class CoordinatorLLM:
         from pathlib import Path
         root = Path(__file__).parent.parent.parent
         sys.path.insert(0, str(root))
-        from factory.clients.native_vllm_client import NativeVLLMClient
+        from clients.gpu import load_native_vllm_client
+        NativeVLLMClient = load_native_vllm_client()
 
         gpu_util    = float(os.getenv("COORDINATOR_GPU_UTIL", "0.5"))
         max_model_len = int(os.getenv("VLLM_MAX_MODEL_LEN", "8192"))

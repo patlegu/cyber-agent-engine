@@ -48,7 +48,7 @@ Supporte deux plateformes :
 
 3. Vérifier le schéma généré :
 
-       python factory/scripts/extract_wireguard_tools.py
+       python scripts/extract_wireguard_tools.py
 
 ---
 
@@ -63,7 +63,7 @@ import ipaddress
 from typing import Dict, List, Optional, Literal, Any
 from datetime import datetime
 from .base import ToolAgent
-from factory.clients import WireGuardAPIClient, WireGuardLinuxClient
+from clients import WireGuardAPIClient, WireGuardLinuxClient
 
 logger = logging.getLogger(__name__)
 

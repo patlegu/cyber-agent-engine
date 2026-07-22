@@ -70,7 +70,7 @@ from typing import Dict, List, Literal, Optional
 
 from .base import ToolAgent, FunctionCall
 try:
-    from factory.clients.crowdsec_client import CrowdSecClient, CrowdSecAPIError
+    from clients.crowdsec_client import CrowdSecClient, CrowdSecAPIError
 except ImportError:
     CrowdSecClient = None
     pass
