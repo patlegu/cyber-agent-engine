@@ -9,9 +9,14 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from agents.errors import ErrorCode
+
+_MAX_ARGS = 64
+_MAX_KEY_LEN = 128
+_MAX_VAL_LEN = 8192
+_MAX_FUNCTION_LEN = 128
 
 
 # ---------------------------------------------------------------------------
@@ -20,31 +25,36 @@ from agents.errors import ErrorCode
 
 class AgentExecuteRequest(BaseModel):
     """
-    Requête d'exécution vers le tool-agent-server.
-
-    Deux modes mutuellement inclusifs :
-    - **Naturel** : `command` en langage naturel → le vLLM de l'agent l'interprète
-    - **Structuré** : `function` + `args` → l'agent exécute directement, sans LLM
-
-    Au moins l'un des deux doit être fourni.
+    Requête d'exécution CAP v2. Mode structuré (`function`+`args`) sur la chaîne
+    de confiance ; `command` (langage naturel) réservé au debug hors chaîne.
     """
+
+    model_config = ConfigDict(extra="forbid")
+
     command: Optional[str] = Field(
         default=None,
-        description="Commande en langage naturel (mode naturel).",
+        description="Commande NL (mode debug).",
     )
     function: Optional[str] = Field(
         default=None,
-        description="Nom de la fonction à appeler directement (mode structuré).",
+        description="Fonction à appeler (mode structuré).",
     )
-    args: dict[str, Any] = Field(
+    args: dict[str, str] = Field(
         default_factory=dict,
-        description="Arguments à passer à la fonction en mode structuré.",
+        description="Args structurés (str).",
     )
 
     @model_validator(mode="after")
-    def require_command_or_function(self) -> AgentExecuteRequest:
+    def _validate(self) -> AgentExecuteRequest:
         if not self.command and not self.function:
             raise ValueError("Either 'command' or 'function' must be provided.")
+        if self.function is not None and len(self.function) > _MAX_FUNCTION_LEN:
+            raise ValueError("function name too long")
+        if len(self.args) > _MAX_ARGS:
+            raise ValueError("too many args")
+        for k, v in self.args.items():
+            if len(k) > _MAX_KEY_LEN or len(v) > _MAX_VAL_LEN:
+                raise ValueError(f"arg '{k}' exceeds size bound")
         return self
 
 
@@ -60,10 +70,13 @@ class AgentExecuteResponse(BaseModel):
     - server.py pour construire et sérialiser les réponses
     - ToolAgentClient pour valider et typer les réponses reçues
     """
+
+    model_config = ConfigDict(extra="forbid")
+
     success: bool
     tool_name: str = ""
     function: str = ""
-    args: dict[str, Any] = Field(default_factory=dict)
+    args: dict[str, str] = Field(default_factory=dict)
     result: Any = None
     error: Optional[str] = None
     error_code: Optional[ErrorCode] = None
