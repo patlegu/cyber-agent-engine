@@ -1,0 +1,127 @@
+import itertools
+import json
+import re
+
+import pytest
+
+from coordinator.loop import Completed, Denied, Failed, GatedLoop, Suspended
+from coordinator.proposer import Act, Finish
+from coordinator.session import MemorySessionStore
+from core.approval.store import ApprovalStore
+from core.audit.sink import MemoryAuditSink
+from core.policy.catalog import Capability, CapabilityCatalog
+from core.policy.models import Intention, Match, Rule
+
+
+def _catalog():
+    return CapabilityCatalog([
+        Capability(name="crowdsec.ban_ip", required_args=["ip"]),
+        Capability(name="crowdsec.get_metrics", required_args=[]),
+    ])
+
+
+class _ScriptedProposer:
+    """Renvoie une proposition scriptée par pas ; ignore le prompt."""
+    def __init__(self, proposals):
+        self._it = iter(proposals)
+
+    async def propose(self, request_tokens, history):
+        return next(self._it)
+
+
+def _extract(text):
+    # extracteur trivial : repère un motif IP factice pour la tokenisation
+    return {"IP": re.findall(r"\b\d+\.\d+\.\d+\.\d+\b", text)}
+
+
+def _ids():
+    counter = itertools.count(1)
+    return lambda: f"appr-{next(counter)}"
+
+
+def _loop(proposer, policy, *, call=None, sessions=None, clock=None):
+    async def _noop_call(cap, args):
+        return {"ok": cap, "args": args}
+    return GatedLoop(
+        proposer=proposer, catalog=_catalog(), policy=policy,
+        sink=MemoryAuditSink(), approvals=ApprovalStore(),
+        sessions=sessions or MemorySessionStore(),
+        call=call or _noop_call, extract=_extract,
+        clock=clock or (lambda: 0.0), id_factory=_ids(),
+        max_steps=5, session_ttl=300.0,
+    )
+
+
+@pytest.mark.asyncio
+async def test_allow_then_finish_completes():
+    proposer = _ScriptedProposer([
+        Act(intention=Intention(capability="crowdsec.get_metrics", args={})),
+        Finish(summary="fait"),
+    ])
+    policy = [Rule(match=Match(capability="crowdsec.get_metrics"), effect="allow")]
+    res = await _loop(proposer, policy).handle("montre les métriques")
+    assert isinstance(res, Completed)
+    assert len(res.results) == 1
+
+
+@pytest.mark.asyncio
+async def test_deny_stops():
+    proposer = _ScriptedProposer(
+        [Act(intention=Intention(capability="crowdsec.get_metrics", args={}))]
+    )
+    res = await _loop(proposer, []).handle("x")  # politique vide → deny
+    assert isinstance(res, Denied)
+
+
+@pytest.mark.asyncio
+async def test_approve_suspends_then_resume_completes():
+    proposer = _ScriptedProposer([
+        Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"})),
+        Finish(summary="banni"),
+    ])
+    policy = [Rule(match=Match(capability="crowdsec.ban_ip"), effect="approve")]
+    sessions = MemorySessionStore()
+    loop = _loop(proposer, policy, sessions=sessions)
+    res = await loop.handle("banni 203.0.113.9")
+    assert isinstance(res, Suspended)
+    loop._approvals.approve(res.approval_id, loop._approvals.get(res.approval_id).intention_hash)
+    res2 = await loop.resume(res.approval_id)
+    assert isinstance(res2, Completed)
+
+
+@pytest.mark.asyncio
+async def test_resume_expired_session_fails():
+    proposer = _ScriptedProposer(
+        [Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"}))]
+    )
+    policy = [Rule(match=Match(capability="crowdsec.ban_ip"), effect="approve")]
+    clock_box = {"t": 0.0}
+    loop = _loop(proposer, policy, clock=lambda: clock_box["t"])
+    res = await loop.handle("banni 203.0.113.9")
+    assert isinstance(res, Suspended)
+    loop._approvals.approve(res.approval_id, loop._approvals.get(res.approval_id).intention_hash)
+    clock_box["t"] = 10_000.0  # au-delà du TTL
+    res2 = await loop.resume(res.approval_id)
+    assert isinstance(res2, Failed)
+
+
+@pytest.mark.asyncio
+async def test_llm_never_sees_real_ip():
+    seen = []
+
+    class _Spy:
+        async def propose(self, request_tokens, history):
+            seen.append((request_tokens, tuple(history)))
+            if len(seen) == 1:
+                return Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"}))
+            return Finish(summary="ok")
+
+    policy = [Rule(match=Match(capability="crowdsec.ban_ip"), effect="allow")]
+
+    async def _echo_call(cap, args):
+        return {"echo_ip": args["ip"]}  # renvoie la vraie IP → doit être re-tokenisée
+
+    res = await _loop(_Spy(), policy, call=_echo_call).handle("banni 203.0.113.9")
+    assert isinstance(res, Completed)
+    flat = json.dumps(seen, ensure_ascii=False)
+    assert "203.0.113.9" not in flat  # ni requête ni observation ne fuit l'IP
