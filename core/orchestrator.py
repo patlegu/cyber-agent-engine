@@ -12,9 +12,9 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict
 
-from core.approval.store import ApprovalStore
+from core.approval.store import ApprovalNotFound, ApprovalStore
 from core.audit.sink import AuditSink, entry_from_verdict
-from core.execution.authorization import grant, grant_approved
+from core.execution.authorization import NotAuthorized, grant, grant_approved
 from core.execution.boundary import AgentCall, execute
 from core.policy.catalog import CapabilityCatalog
 from core.policy.engine import evaluate
@@ -81,15 +81,28 @@ class TrustOrchestrator:
     async def resume(self, approval_id: str) -> Outcome:
         approval = self._approvals.get(approval_id)
         if approval is None:
-            raise KeyError(approval_id)
-        vault = self._vaults.get(approval_id, Vault())
+            raise ApprovalNotFound(approval_id)
         verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
-        # grant_approved lève si l'approbation n'est pas dans l'état "approved" (fail-closed).
-        authorized = grant_approved(approval)
+        try:
+            # grant_approved lève si l'approbation n'est pas dans l'état "approved" (fail-closed).
+            authorized = grant_approved(approval)
+        except NotAuthorized:
+            # Une tentative de reprise non autorisee (approbation pending/rejetee/expiree)
+            # doit laisser une trace : l'audit est la propriete de securite centrale.
+            self._sink.write(entry_from_verdict(verdict, event="resume_refuse"))
+            raise
+        vault = self._vaults.pop(approval_id, Vault())  # pop = nettoyage du vault de session
         result = await execute(authorized, vault, self._call)
         self._sink.write(entry_from_verdict(verdict, event="executed_after_approval"))
-        self._vaults.pop(approval_id, None)
         return Outcome(status="executed", verdict=verdict, result=result)
+
+    def reject(self, approval_id: str) -> Outcome:
+        """Rejette une approbation en attente : audit + nettoyage du vault de session."""
+        approval = self._approvals.reject(approval_id)  # leve ApprovalNotFound si inconnu
+        verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
+        self._sink.write(entry_from_verdict(verdict, event="rejected"))
+        self._vaults.pop(approval_id, None)
+        return Outcome(status="denied", verdict=verdict)
 
 
 __all__ = ["Outcome", "Proposer", "Status", "TrustOrchestrator"]

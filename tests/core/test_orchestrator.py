@@ -1,7 +1,10 @@
 from typing import Any
 
-from core.approval.store import ApprovalStore
+import pytest
+
+from core.approval.store import ApprovalNotFound, ApprovalStore
 from core.audit.sink import MemoryAuditSink
+from core.execution.authorization import NotAuthorized
 from core.orchestrator import TrustOrchestrator
 from core.policy.catalog import Capability, CapabilityCatalog
 from core.policy.models import ArgMatch, Intention, Match, Rule
@@ -84,3 +87,51 @@ async def test_approve_suspend_puis_resume_execute() -> None:
     approvals.approve(ap.id, ap.intention_hash)
     resumed = await orch.resume(out.approval_id)
     assert resumed.status == "executed" and len(seen) == 1
+
+
+async def test_resume_inconnu_leve_approval_not_found() -> None:
+    _, call = _calls()
+    orch = TrustOrchestrator(
+        policy=[], catalog=_catalog(), extract=_extract,
+        proposer=_Proposer(Intention(capability="crowdsec.add_ban", args={"ip": "IP_1"})),
+        call=call, sink=MemoryAuditSink(), approvals=ApprovalStore(),
+    )
+    with pytest.raises(ApprovalNotFound):
+        await orch.resume("appr-inconnu")
+
+
+async def test_resume_non_approuve_est_audite_et_refuse() -> None:
+    seen, call = _calls()
+    sink = MemoryAuditSink()
+    policy = [Rule(match=Match(capability="opnsense.add_nat"), effect="approve")]
+    approvals = ApprovalStore()
+    orch = TrustOrchestrator(
+        policy=policy, catalog=_catalog(), extract=_extract,
+        proposer=_Proposer(Intention(capability="opnsense.add_nat", args={"interface": "lan"})),
+        call=call, sink=sink, approvals=approvals,
+    )
+    out = await orch.handle("ajouter un nat")
+    assert out.approval_id is not None
+    before = len(sink.entries)
+    with pytest.raises(NotAuthorized):
+        await orch.resume(out.approval_id)  # jamais approuve -> refus
+    assert seen == []  # rien execute
+    assert any(e.event == "resume_refuse" for e in sink.entries[before:])  # tentative auditee
+
+
+async def test_reject_nettoie_le_vault_et_audite() -> None:
+    _, call = _calls()
+    sink = MemoryAuditSink()
+    policy = [Rule(match=Match(capability="opnsense.add_nat"), effect="approve")]
+    approvals = ApprovalStore()
+    orch = TrustOrchestrator(
+        policy=policy, catalog=_catalog(), extract=_extract,
+        proposer=_Proposer(Intention(capability="opnsense.add_nat", args={"interface": "lan"})),
+        call=call, sink=sink, approvals=approvals,
+    )
+    out = await orch.handle("ajouter un nat")
+    assert out.approval_id is not None and out.approval_id in orch._vaults
+    rejected = orch.reject(out.approval_id)
+    assert rejected.status == "denied"
+    assert out.approval_id not in orch._vaults  # vault de session nettoye
+    assert any(e.event == "rejected" for e in sink.entries)
