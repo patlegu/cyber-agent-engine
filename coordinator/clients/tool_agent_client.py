@@ -4,7 +4,6 @@ coordinator/clients/tool_agent_client.py — Client HTTP vers le tool-agent-serv
 Encapsule tous les appels vers http://localhost:3000 :
 - GET  /capabilities              (cache 60 s)
 - POST /agent/execute (naturel)   commande en langage naturel → vLLM de l'agent interprète
-- POST /agent/execute (CAP v1)    paquet CoordinatorDirective → SLM entraîné sur format CAP
 - POST /agent/execute (structuré) function + args directs → bypass LLM, exécution immédiate
 
 Toutes les réponses sont validées via le modèle Pydantic AgentExecuteResponse
@@ -17,7 +16,7 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from pydantic import ValidationError
@@ -34,7 +33,7 @@ _RETRY_BACKOFF = 1.0   # secondes
 
 class ToolAgentError(Exception):
     """Erreur non-récupérable retournée par un agent-outil."""
-    def __init__(self, message: str, error_code: Optional[str] = None):
+    def __init__(self, message: str, error_code: str | None = None):
         super().__init__(message)
         self.error_code = error_code
 
@@ -50,12 +49,17 @@ class ToolAgentClient:
             result = await client.execute_structured("delete_filter_rule", {"uuid": "..."})
     """
 
-    def __init__(self, base_url: str = "http://localhost:3000", api_key: str = "", socket_path: str = ""):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:3000",
+        api_key: str = "",
+        socket_path: str = "",
+    ):
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
         self._socket_path = socket_path  # UDS : chemin vers le fichier socket
-        self._client: Optional[httpx.AsyncClient] = None
-        self._capabilities_cache: Optional[dict] = None
+        self._client: httpx.AsyncClient | None = None
+        self._capabilities_cache: dict | None = None
         self._capabilities_ts: float = 0.0
         self._capabilities_ttl: float = 60.0
 
@@ -123,7 +127,9 @@ class ToolAgentClient:
                     logger.warning("Timeout (attempt %d/%d), retrying…", attempt, _MAX_RETRIES + 1)
                     await asyncio.sleep(_RETRY_BACKOFF * attempt)
                     continue
-                raise ToolAgentError("Tool agent unreachable after retries", "API_UNREACHABLE") from exc
+                raise ToolAgentError(
+                    "Tool agent unreachable after retries", "API_UNREACHABLE"
+                ) from exc
 
             # Validation Pydantic — lève ValidationError si le schéma est incorrect
             try:
@@ -170,34 +176,6 @@ class ToolAgentClient:
     # ------------------------------------------------------------------
     # Mode structuré — bypass LLM
     # ------------------------------------------------------------------
-
-    async def execute_cap(self, directive: "CoordinatorDirective") -> dict:
-        """
-        Envoie un paquet CAP v1 au tool-agent-server.
-
-        Le paquet est sérialisé en JSON et transmis comme `command` (mode naturel),
-        mais le SLM agent est entraîné sur le format CAP et génère directement
-        un tool_call — sans interpréter du langage naturel.
-
-        Utiliser quand la tâche dispose d'un champ `directive` (fonction résolue
-        par le coordinateur lors de la planification).
-
-        Args:
-            directive: CoordinatorDirective — paquet CAP v1 prêt à envoyer.
-
-        Returns:
-            dict (AgentExecuteResponse sérialisée)
-        """
-        cap_json = directive.to_user_message()
-        logger.info(
-            "CAP call: directive=%s entities=%s args=%s",
-            directive.directive,
-            {k: v for k, v in directive.entities.items() if v},
-            directive.args,
-        )
-        req = AgentExecuteRequest(command=cap_json)
-        response = await self._post_execute(req.model_dump(exclude_none=True))
-        return response.model_dump()
 
     async def execute_structured(self, function: str, args: dict[str, Any]) -> dict:
         """

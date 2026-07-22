@@ -2,9 +2,9 @@
 agents/ner_extractor.py — Extracteur NER léger pour le coordinateur.
 
 Charge le modèle AnonyNER (spaCy) et expose extract() → dict[str, list[str]],
-au format attendu par CoordinatorDirective.entities.
+un dict de types NER vers listes de valeurs extraites.
 
-Conçu pour être utilisé dans coordinator/pilot.py sans dépendre de ToolAgent
+Conçu pour être utilisé côté coordinateur sans dépendre de ToolAgent
 ni de la stack d'inférence vLLM/Ollama. Chargement lazy, instance singleton.
 
 Usage :
