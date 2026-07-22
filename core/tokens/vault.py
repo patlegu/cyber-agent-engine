@@ -8,16 +8,10 @@ ou dans la vue d'approbation humaine.
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from typing import Any
 
 ExtractFn = Callable[[str], dict[str, list[str]]]
-
-# Forme d'un jeton produit par ``Vault.token_for`` : LABEL_N (ex. IP_1,
-# VPN_USER_2). Utilisé par ``detokenize`` pour repérer les jetons imbriqués
-# dans une chaîne plus large (ex. "ban IP_1") sans avoir à énumérer le vault.
-_TOKEN_RE = re.compile(r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_\d+\b")
 
 
 class Vault:
@@ -44,6 +38,10 @@ class Vault:
     def values(self) -> set[str]:
         return set(self._to_real.values())
 
+    def items(self) -> dict[str, str]:
+        """Copie de la table jeton→valeur émise dans cette session."""
+        return dict(self._to_real)
+
 
 def tokenize(text: str, vault: Vault, extract: ExtractFn) -> str:
     """Remplace chaque entité sensible détectée par son jeton stable de session."""
@@ -61,13 +59,18 @@ def tokenize(text: str, vault: Vault, extract: ExtractFn) -> str:
 
 
 def detokenize(obj: Any, vault: Vault) -> Any:
-    """Remplace récursivement les jetons par leurs valeurs réelles (str/dict/list)."""
-    if isinstance(obj, str):
-        def _resolve_match(match: re.Match[str]) -> str:
-            real = vault.resolve(match.group(0))
-            return real if real is not None else match.group(0)
+    """Remplace récursivement les jetons ÉMIS par le vault par leurs valeurs réelles.
 
-        return _TOKEN_RE.sub(_resolve_match, obj)
+    On ne remplace que les jetons que ce vault a effectivement produits (pas de
+    reconnaissance par forme) : rien qui ressemble à un jeton mais n'a pas été émis
+    n'est jamais touché. Remplacement du jeton le plus long au plus court pour qu'un
+    jeton préfixe d'un autre (IP_1 vs IP_10) ne soit pas corrompu.
+    """
+    if isinstance(obj, str):
+        text = obj
+        for token, real in sorted(vault.items().items(), key=lambda kv: len(kv[0]), reverse=True):
+            text = text.replace(token, real)
+        return text
     if isinstance(obj, dict):
         return {k: detokenize(v, vault) for k, v in obj.items()}
     if isinstance(obj, list):

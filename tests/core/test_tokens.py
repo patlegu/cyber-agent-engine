@@ -52,3 +52,20 @@ def test_property_aucune_valeur_du_vault_dans_le_texte_tokenise() -> None:
     out = tokenize("10.0.0.5 user:bob 10.0.0.6", v, _fake_extract)
     for real in v.values():
         assert real not in out
+
+
+def test_detokenize_ne_touche_pas_une_chaine_ressemblant_a_un_jeton() -> None:
+    # Une chaine en forme de jeton mais JAMAIS emise par ce vault reste intacte.
+    v = Vault()
+    tokenize("10.0.0.5", v, _fake_extract)  # emet IP_1 -> 10.0.0.5
+    assert detokenize("voir IP_2 et FOO_9", v) == "voir IP_2 et FOO_9"
+
+
+def test_detokenize_prefixe_ip_1_vs_ip_10() -> None:
+    v = Vault()
+    # Force l'emission de IP_1 puis IP_10 (dix IP distinctes).
+    for i in range(1, 11):
+        v.token_for("IP", f"10.0.0.{i}")
+    assert v.resolve("IP_1") == "10.0.0.1" and v.resolve("IP_10") == "10.0.0.10"
+    # detokenize doit rendre IP_10 -> 10.0.0.10 sans corruption par IP_1.
+    assert detokenize({"a": "IP_10", "b": "IP_1"}, v) == {"a": "10.0.0.10", "b": "10.0.0.1"}
