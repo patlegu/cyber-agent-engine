@@ -21,6 +21,6 @@ def test_conformance_matches_live_agent():
 
 
 def test_conformance_detects_drift():
-    live = [{"name": "ban_ip", "required": ["ip", "SURPRISE"]}]
+    live = [{"name": "ban_ip", "parameters": {"required": ["ip", "DRIFT"]}}]
     with pytest.raises(ManifestConformanceError):
         check_conformance("crowdsec", live)

@@ -41,11 +41,8 @@ def _live_required(cap: dict[str, Any]) -> list[str]:
     """Extrait `required` d'une capacité live.
 
     `ToolAgent.get_capabilities()` renvoie un schéma function-calling où
-    `required` est niché sous `parameters.required` ; on accepte aussi un
-    `required` au premier niveau (forme simplifiée utilisée en test).
+    `required` est niché sous `parameters.required`.
     """
-    if "required" in cap:
-        return list(cap["required"])
     return list(cap.get("parameters", {}).get("required", []))
 
 
