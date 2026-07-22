@@ -64,3 +64,19 @@ def test_execute_completes_with_auth():
 def test_health_no_auth():
     r = _client(_loop([Finish(summary="x")], [])).get("/coordinator/health")
     assert r.status_code == status.HTTP_200_OK
+
+
+def test_build_app_reads_loop_from_state():
+    # les routes existantes doivent continuer à marcher via app.state.loop.
+    # Réutilise les helpers _loop / _client et les imports Act/Finish/Intention/Match/Rule
+    # déjà présents en tête de ce fichier.
+    seq = [
+        Act(intention=Intention(capability="crowdsec.get_metrics", args={})),
+        Finish(summary="fini"),
+    ]
+    policy = [Rule(match=Match(capability="crowdsec.get_metrics"), effect="allow")]
+    r = _client(_loop(seq, policy)).post(
+        "/coordinator/execute", headers={"X-API-Key": "secret"}, json={"request": "métriques"}
+    )
+    assert r.status_code == status.HTTP_200_OK
+    assert r.json()["status"] == "completed"

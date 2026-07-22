@@ -97,6 +97,8 @@ class CrowdSecAgent(ToolAgent):
         api_config: Optional[Dict] = None,
         ollama_config: Optional[Dict] = None,
         vllm_client=None,
+        openai_client=None,
+        lora_model: str = "",
     ):
         super().__init__(
             tool_name="crowdsec",
@@ -104,6 +106,8 @@ class CrowdSecAgent(ToolAgent):
             api_config=api_config,
             ollama_config=ollama_config,
             vllm_client=vllm_client,
+            openai_client=openai_client,
+            lora_model=lora_model,
         )
         self.client = None
         self._init_client()
@@ -175,7 +179,7 @@ Fonctions valides: {}
             
         except Exception as e:
             logger.error(f"Erreur inférence Ollama: {e}")
-            return await self._infer_with_simulation(user_request)
+            raise
 
     def _register_functions(self) -> Dict[str, callable]:
         """Enregistre les fonctions CrowdSec."""

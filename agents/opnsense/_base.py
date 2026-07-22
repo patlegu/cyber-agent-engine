@@ -130,6 +130,8 @@ class OPNsenseAgent(
         ollama_config: Optional[Dict] = None,
         platform: str = "opnsense",
         vllm_client: Optional[Any] = None,
+        openai_client: Optional[Any] = None,
+        lora_model: str = "",
     ):
         # platform doit être défini AVANT super().__init__ car _register_functions
         # peut en avoir besoin via les Mixins lors de l'init de ToolAgent
@@ -142,6 +144,8 @@ class OPNsenseAgent(
             api_config=api_config,
             ollama_config=ollama_config,
             vllm_client=vllm_client,
+            openai_client=openai_client,
+            lora_model=lora_model,
         )
 
         # Initialisation du client API selon la plateforme
