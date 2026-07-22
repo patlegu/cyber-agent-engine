@@ -46,3 +46,23 @@ def test_env_example_has_required_keys_no_secrets():
 
 def test_gitignore_excludes_env():
     assert ".env" in (_ROOT / ".gitignore").read_text(encoding="utf-8")
+
+
+def test_coordinator_agent_key_wired():
+    """La clé sortante du coordinateur (AGENT_SERVER_KEY) doit être câblée
+    sur le même secret que celui appliqué par le serveur d'agents
+    (AGENT_API_KEY), sinon le coordinateur envoie une clé vide et se
+    prend un 401 au démarrage (crash-loop)."""
+    svc = _compose()["services"]["coordinator"]
+    env = svc.get("environment") or {}
+    assert env.get("AGENT_SERVER_KEY") == "${AGENT_API_KEY}"
+
+
+def test_coordinator_port_pinned():
+    """Le port d'écoute du conteneur doit être figé à 8080 dans
+    `environment` (qui prime sur `env_file`), sinon COORDINATOR_PORT
+    venant de .env change le port d'écoute réel alors que le mapping
+    `ports:` et le healthcheck restent câblés sur :8080."""
+    svc = _compose()["services"]["coordinator"]
+    env = svc.get("environment") or {}
+    assert env.get("COORDINATOR_PORT") == "8080"

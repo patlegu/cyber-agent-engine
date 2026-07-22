@@ -19,7 +19,9 @@ services:
     env_file: .env
     environment:
       AGENT_SERVER_URL: "http://agent-server:3000"
+      AGENT_SERVER_KEY: "${AGENT_API_KEY}"
       COORDINATOR_HOST: "0.0.0.0"
+      COORDINATOR_PORT: "8080"
       COORDINATOR_POLICY_FILE: "/policy/policy.yml"
       COORDINATOR_AUDIT_FILE: "/data/audit.jsonl"
       COORDINATOR_SESSION_DIR: "/data/sessions"

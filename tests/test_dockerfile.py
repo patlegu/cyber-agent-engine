@@ -18,3 +18,17 @@ def test_dockerignore_excludes_heavy_paths():
     di = (_ROOT / ".dockerignore").read_text(encoding="utf-8")
     for path in (".venv", "tests", ".git", "dist"):
         assert path in di
+
+
+def test_data_dir_prepared_for_appuser():
+    """/data doit exister et appartenir à appuser AVANT USER appuser,
+    sinon le volume nommé fraîchement créé reste root-owned et
+    EncryptedFileSessionStore plante avec un PermissionError au mkdir."""
+    df = (_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert re.search(r"mkdir\s+-p\s+/data", df)
+    assert re.search(r"chown\s+appuser:appuser\s+/data", df)
+
+    lines = df.splitlines()
+    chown_idx = next(i for i, line in enumerate(lines) if "chown appuser:appuser /data" in line)
+    user_idx = next(i for i, line in enumerate(lines) if line.strip() == "USER appuser")
+    assert chown_idx < user_idx

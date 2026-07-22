@@ -20,6 +20,7 @@ COPY --from=builder /install /usr/local
 WORKDIR /app
 COPY server.py ./
 COPY dashboard ./dashboard
+RUN mkdir -p /data && chown appuser:appuser /data
 USER appuser
 # CMD par défaut = coordinateur ; compose surcharge par service.
 CMD ["cyber-coordinator"]
