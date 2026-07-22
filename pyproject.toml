@@ -13,6 +13,7 @@ dependencies = [
     "httpx>=0.25.0",
     "pyyaml>=6.0",
     "jinja2>=3.0.0",
+    "cryptography>=42.0.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -29,7 +30,14 @@ select = ["E", "F", "I", "B", "UP", "SIM", "PL", "RUF"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["core"]
+# Vérifie strictement le périmètre `files` ; n'émet PAS les erreurs des modules
+# legacy suivis en import (dette pré-existante hors sous-projet B). Décision
+# contrôleur analogue au gating ruff du sous-projet A.
+follow_imports = "silent"
+files = ["core", "coordinator/agent_call.py", "coordinator/proposer.py",
+         "coordinator/catalog_builder.py", "coordinator/session.py",
+         "coordinator/loop.py", "coordinator/app.py",
+         "agents/contracts.py", "agents/coercion.py", "agents/manifest.py"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -14,10 +14,10 @@ from pydantic import BaseModel, ConfigDict
 
 from core.approval.store import ApprovalNotFound, ApprovalStore
 from core.audit.sink import AuditSink, entry_from_verdict
+from core.decision import decide
 from core.execution.authorization import NotAuthorized, grant, grant_approved
 from core.execution.boundary import AgentCall, execute
 from core.policy.catalog import CapabilityCatalog
-from core.policy.engine import evaluate
 from core.policy.models import Intention, Rule, Verdict
 from core.tokens.vault import ExtractFn, Vault, tokenize
 
@@ -63,9 +63,9 @@ class TrustOrchestrator:
         vault = Vault()
         prompt = tokenize(request_text, vault, self._extract)
         intention = await self._proposer.propose(prompt)
-        self._catalog.validate_intention(intention)  # lève si capacité inconnue / args manquants
-        verdict = evaluate(intention, self._policy)
-        self._sink.write(entry_from_verdict(verdict, event="policy_decision"))
+        verdict = decide(
+            intention, catalog=self._catalog, policy=self._policy, sink=self._sink
+        )
 
         if verdict.effect == "deny":
             return Outcome(status="denied", verdict=verdict)

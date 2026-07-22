@@ -1,0 +1,34 @@
+# agents/manifests/crowdsec.yml
+# Capacités déclarées de l'agent CrowdSec (source de vérité pour catalogue + conformance).
+agent: crowdsec
+capabilities:
+  - name: ban_ip
+    required_args: [ip]
+  - name: unban_ip
+    required_args: [ip]
+  - name: get_decisions
+    required_args: []
+  - name: add_decision
+    required_args: [value]
+  - name: delete_decision
+    required_args: [decision_id]
+  - name: get_alerts
+    required_args: []
+  - name: get_alert
+    required_args: [alert_id]
+  - name: delete_alert
+    required_args: [alert_id]
+  - name: get_allowlists
+    required_args: []
+  - name: check_allowlist
+    required_args: [ip_or_range]
+  - name: list_bouncers
+    required_args: []
+  - name: list_machines
+    required_args: []
+  - name: get_metrics
+    required_args: []
+  - name: hub_upgrade
+    required_args: []
+  - name: set_simulation
+    required_args: [action]
