@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict
 
 from core.policy.models import Intention
 
-State = Literal["pending", "approved", "rejected", "expired"]
+State = Literal["pending", "approved", "rejected", "expired", "executed"]
 
 
 class ApprovalMismatch(Exception):
@@ -73,6 +73,13 @@ class ApprovalStore:
     def reject(self, approval_id: str) -> Approval:
         ap = self._require(approval_id)
         updated = ap.model_copy(update={"state": "rejected"})
+        self._by_id[approval_id] = updated
+        return updated
+
+    def mark_executed(self, approval_id: str) -> Approval:
+        """Consomme une approbation apres execution reussie : un 2e resume echouera."""
+        ap = self._require(approval_id)
+        updated = ap.model_copy(update={"state": "executed"})
         self._by_id[approval_id] = updated
         return updated
 

@@ -91,8 +91,11 @@ class TrustOrchestrator:
             # doit laisser une trace : l'audit est la propriete de securite centrale.
             self._sink.write(entry_from_verdict(verdict, event="resume_refuse"))
             raise
-        vault = self._vaults.pop(approval_id, Vault())  # pop = nettoyage du vault de session
+        vault = self._vaults.get(approval_id, Vault())  # get = vault conserve si execute echoue
         result = await execute(authorized, vault, self._call)
+        # Consomme l'approbation seulement apres succes : un 2e resume est refuse fail-closed.
+        self._approvals.mark_executed(approval_id)
+        self._vaults.pop(approval_id, None)  # nettoyage du vault de session apres succes
         self._sink.write(entry_from_verdict(verdict, event="executed_after_approval"))
         return Outcome(status="executed", verdict=verdict, result=result)
 

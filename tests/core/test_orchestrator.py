@@ -119,6 +119,29 @@ async def test_resume_non_approuve_est_audite_et_refuse() -> None:
     assert any(e.event == "resume_refuse" for e in sink.entries[before:])  # tentative auditee
 
 
+async def test_second_resume_est_refuse_fail_closed() -> None:
+    seen, call = _calls()
+    sink = MemoryAuditSink()
+    policy = [Rule(match=Match(capability="opnsense.add_nat"), effect="approve")]
+    approvals = ApprovalStore()
+    orch = TrustOrchestrator(
+        policy=policy, catalog=_catalog(), extract=_extract,
+        proposer=_Proposer(Intention(capability="opnsense.add_nat", args={"interface": "lan"})),
+        call=call, sink=sink, approvals=approvals,
+    )
+    out = await orch.handle("ajouter un nat")
+    assert out.approval_id is not None
+    ap = approvals.get(out.approval_id)
+    assert ap is not None
+    approvals.approve(ap.id, ap.intention_hash)
+    first = await orch.resume(out.approval_id)
+    assert first.status == "executed" and len(seen) == 1
+    # Un 2e resume ne doit PAS rejouer la mutation : refus fail-closed + audit.
+    with pytest.raises(NotAuthorized):
+        await orch.resume(out.approval_id)
+    assert len(seen) == 1, "la mutation ne doit pas etre rejouee"
+
+
 async def test_reject_nettoie_le_vault_et_audite() -> None:
     _, call = _calls()
     sink = MemoryAuditSink()
