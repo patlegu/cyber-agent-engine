@@ -17,7 +17,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["factory*"]
+include = ["core*"]
 
 [tool.ruff]
 line-length = 100

@@ -1,3 +1,13 @@
+"""Évaluateur de politique — fonction pure, déterministe, défaut fail-closed.
+
+Confronte une ``Intention`` proposée par le LLM à la liste de règles de
+l'opérateur et rend un ``Verdict``. Première règle qui matche gagne (l'ordre EST
+la priorité, comme un firewall) ; aucune règle ne matche → ``deny``. Le LLM ne
+peut pas s'auto-autoriser : seuls ``capability`` et ``args`` sont regardés,
+jamais ``rationale``. Les conditions comparent des structures (glob + eq/ne/
+in/nin/present/absent), sans aucune exécution de code.
+"""
+
 from __future__ import annotations
 
 from fnmatch import fnmatchcase

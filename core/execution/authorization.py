@@ -36,7 +36,7 @@ def grant(verdict: Verdict) -> Authorized:
 
 
 def _grant_intention(intention: Intention) -> Authorized:
-    """Fabrique interne réservée au flux d'approbation (Task 7)."""
+    """Fabrique interne réservée au flux d'approbation."""
     return Authorized(intention, _GRANT)
 
 
