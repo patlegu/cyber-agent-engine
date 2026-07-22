@@ -18,3 +18,20 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["factory*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "PL", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["core"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
