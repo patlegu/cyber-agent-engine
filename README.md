@@ -113,6 +113,47 @@ TOOL_AGENT_GPU_UTIL=0.45
 AGENT_API_KEY=<clé-forte-aléatoire>
 ```
 
+## Déploiement & backends
+
+### Installation
+
+```bash
+pip install cyber-agent-engine          # cœur : coordinateur (API) + agents structurés, sans GPU
+pip install cyber-agent-engine[gpu]     # + loader vLLM/LoRA in-process (torch, vllm, unsloth)
+```
+
+### Backend du coordinateur (LLM de raisonnement)
+
+| Variable                | Rôle                                                        |
+|-------------------------|-------------------------------------------------------------|
+| `COORDINATOR_BACKEND`   | `anthropic` (défaut) \| `openai` \| `vllm` (\[gpu\]) \| `ollama` |
+| `ANTHROPIC_API_KEY`     | clé API (backend anthropic)                                 |
+| `OPENAI_BASE_URL`       | endpoint OpenAI-compatible (OpenRouter, vLLM-HTTP, llama.cpp-server, Ollama `/v1`) |
+| `OPENAI_API_KEY`        | clé/token du endpoint openai-compatible                     |
+
+Un endpoint **OpenAI-compatible** couvre OpenRouter, un serveur vLLM, llama.cpp
+en mode serveur, LocalAI, et l'endpoint `/v1` d'Ollama — aucun GPU requis côté
+`cyber-agent-engine`.
+
+### Agents LoRA (chemin NL optionnel)
+
+Le chemin de confiance (exécution structurée) ne requiert aucun modèle. Pour
+activer l'interprétation en langage naturel par LoRA :
+
+1. Télécharger les LoRA publics depuis HuggingFace (opnsense/wireguard/crowdsec).
+2. Les servir derrière un endpoint OpenAI-compatible (vLLM multi-LoRA, llama.cpp…),
+   le nom de modèle = nom du LoRA.
+3. Configurer l'agent :
+
+| Variable                | Rôle                                                |
+|-------------------------|-----------------------------------------------------|
+| `AGENT_INFER_BASE_URL`  | endpoint OpenAI-compatible servant les LoRA         |
+| `AGENT_INFER_API_KEY`   | clé/token de cet endpoint                           |
+| `AGENT_LORA_MODELS`     | mapping outil→nom de LoRA (ou `CROWDSEC_LORA_MODEL=…`) |
+
+Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite ;
+le chemin structuré (`execute_direct`) reste toujours disponible.
+
 ## Démarrage
 
 ```bash
