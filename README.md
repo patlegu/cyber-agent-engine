@@ -1,8 +1,10 @@
+*English · [Français](README.fr.md)*
+
 # Cyber Agent Engine
 
-Système multi-agents IA pour l'automatisation réseau et la sécurité.
+Multi-agent AI system for network automation and security.
 
-Un **coordinateur LLM** décompose les demandes en langage naturel et délègue l'exécution à des **agents-outils spécialisés** (OPNsense, WireGuard, CrowdSec), chacun piloté par un LoRA fine-tuné sur GPU local.
+An **LLM coordinator** breaks down natural-language requests and delegates execution to **specialized tool agents** (OPNsense, WireGuard, CrowdSec), each driven by a LoRA fine-tuned on a local GPU.
 
 ---
 
@@ -26,7 +28,7 @@ Utilisateur / UI
    API équipement
 ```
 
-**CAP v1** (Coordinator-Agent Packet) : paquet JSON structuré transmis du coordinateur aux agents. Contient la directive, les entités extraites par AnonyNER, les arguments et le contexte.
+**CAP v1** (Coordinator-Agent Packet): structured JSON packet passed from the coordinator to the agents. Contains the directive, the entities extracted by AnonyNER, the arguments, and the context.
 
 ---
 
@@ -55,26 +57,26 @@ cyber-agent-engine/
 
 ## Stack
 
-- **Inférence locale** : [vLLM](https://github.com/vllm-project/vllm) avec chargement multi-LoRA dynamique
-- **Fine-tuning** : [Unsloth](https://github.com/unslothai/unsloth) + TRL/PEFT sur RTX 4070 Ti
-- **Modèles** : Qwen2.5-3B-Instruct (agents) + Qwen2.5-3B-Instruct (coordinateur)
-- **Structured output** : Outlines/xgrammar via `StructuredOutputsParams` vLLM
-- **Dashboard** : Svelte + TypeScript + Tailwind, SSE temps réel
-- **NER sécurité** : spaCy custom (labels : IP, HOSTNAME, CVE, VPN_USER…)
+- **Local inference**: [vLLM](https://github.com/vllm-project/vllm) with dynamic multi-LoRA loading
+- **Fine-tuning**: [Unsloth](https://github.com/unslothai/unsloth) + TRL/PEFT on RTX 4070 Ti
+- **Models**: Qwen2.5-3B-Instruct (agents) + Qwen2.5-3B-Instruct (coordinator)
+- **Structured output**: Outlines/xgrammar via vLLM `StructuredOutputsParams`
+- **Dashboard**: Svelte + TypeScript + Tailwind, real-time SSE
+- **Security NER**: custom spaCy (labels: IP, HOSTNAME, CVE, VPN_USER…)
 
 ---
 
-## Agents-outils
+## Tool agents
 
-| Agent | Fonctions | Modèle de base |
+| Agent | Functions | Base model |
 |---|---|---|
 | OPNsense | 102 (firewall, NAT, IDS, VPN, routing…) | Qwen2.5-3B-Instruct + LoRA |
-| WireGuard | 11 (tunnels, peers, clés) | Qwen2.5-3B-Instruct + LoRA |
-| CrowdSec | 15 (bans, décisions, alertes) | Qwen2.5-3B-Instruct + LoRA |
-| AnonyAgent | 5 (anonymisation NER) | spaCy fr_anonyner |
+| WireGuard | 11 (tunnels, peers, keys) | Qwen2.5-3B-Instruct + LoRA |
+| CrowdSec | 15 (bans, decisions, alerts) | Qwen2.5-3B-Instruct + LoRA |
+| AnonyAgent | 5 (NER anonymization) | spaCy fr_anonyner |
 
-Chaque agent expose ses capacités via `GET /capabilities` (format OpenAI function-calling).
-Le coordinateur découvre dynamiquement les fonctions disponibles au démarrage.
+Each agent exposes its capabilities via `GET /capabilities` (OpenAI function-calling format).
+The coordinator dynamically discovers the available functions at startup.
 
 ---
 
@@ -90,10 +92,10 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Renseigner les variables OPNsense, CrowdSec, clés API
+# Fill in the OPNsense, CrowdSec variables and API keys
 ```
 
-Variables principales :
+Main variables:
 
 ```bash
 # OPNsense
@@ -113,7 +115,7 @@ TOOL_AGENT_GPU_UTIL=0.45
 AGENT_API_KEY=<clé-forte-aléatoire>
 ```
 
-## Déploiement & backends
+## Deployment & backends
 
 ### Installation
 
@@ -122,48 +124,48 @@ pip install cyber-agent-engine          # cœur : coordinateur (API) + agents st
 pip install cyber-agent-engine[gpu]     # + loader vLLM/LoRA in-process (torch, vllm, unsloth)
 ```
 
-### Backend du coordinateur (LLM de raisonnement)
+### Coordinator backend (reasoning LLM)
 
-| Variable                | Rôle                                                        |
+| Variable                | Role                                                        |
 |-------------------------|-------------------------------------------------------------|
-| `COORDINATOR_BACKEND`   | `anthropic` (défaut) \| `openai` \| `vllm` (\[gpu\]) \| `ollama` |
-| `ANTHROPIC_API_KEY`     | clé API (backend anthropic)                                 |
-| `OPENAI_BASE_URL`       | endpoint OpenAI-compatible (OpenRouter, vLLM-HTTP, llama.cpp-server, Ollama `/v1`) |
-| `OPENAI_API_KEY`        | clé/token du endpoint openai-compatible                     |
+| `COORDINATOR_BACKEND`   | `anthropic` (default) \| `openai` \| `vllm` (\[gpu\]) \| `ollama` |
+| `ANTHROPIC_API_KEY`     | API key (anthropic backend)                                 |
+| `OPENAI_BASE_URL`       | OpenAI-compatible endpoint (OpenRouter, vLLM-HTTP, llama.cpp-server, Ollama `/v1`) |
+| `OPENAI_API_KEY`        | key/token of the openai-compatible endpoint                 |
 
-Un endpoint **OpenAI-compatible** couvre OpenRouter, un serveur vLLM, llama.cpp
-en mode serveur, LocalAI, et l'endpoint `/v1` d'Ollama — aucun GPU requis côté
-`cyber-agent-engine`.
+An **OpenAI-compatible** endpoint covers OpenRouter, a vLLM server, llama.cpp
+in server mode, LocalAI, and Ollama's `/v1` endpoint — no GPU required on the
+`cyber-agent-engine` side.
 
-### Agents LoRA (chemin NL optionnel)
+### LoRA agents (optional NL path)
 
-Le chemin de confiance (exécution structurée via `execute_direct`) ne requiert
-aucun modèle et reste toujours disponible.
+The trusted path (structured execution via `execute_direct`) requires no
+model and always remains available.
 
-Pour activer l'interprétation en langage naturel par LoRA :
+To enable LoRA natural-language interpretation:
 
-1. Télécharger les LoRA publics depuis HuggingFace (opnsense, wireguard, crowdsec).
-2. Les servir derrière un endpoint OpenAI-compatible (vLLM multi-LoRA, llama.cpp…),
-   le nom de modèle = nom du LoRA.
+1. Download the public LoRAs from HuggingFace (opnsense, wireguard, crowdsec).
+2. Serve them behind an OpenAI-compatible endpoint (vLLM multi-LoRA, llama.cpp…),
+   with the model name = LoRA name.
 
-L'agent reçoit ce backend via les paramètres injectés au niveau du constructeur
-`ToolAgent` :
+The agent receives this backend via parameters injected at the `ToolAgent`
+constructor level:
 
-- `openai_client` : client HTTP OpenAI-compatible (`OpenAICompatClient`)
-- `lora_model` : nom du LoRA à utiliser
+- `openai_client`: OpenAI-compatible HTTP client (`OpenAICompatClient`)
+- `lora_model`: name of the LoRA to use
 
-**Note :** Le câblage automatique depuis des variables d'environnement
-(`AGENT_INFER_BASE_URL`, `AGENT_INFER_API_KEY`, `AGENT_LORA_MODELS`) est
-prévu au niveau de l'assemblage runtime (sous-projet D) et n'est pas encore
-actif dans ce paquet. Ces noms de variables restent découvrables pour la
-documentation, mais ne sont pas lus par le code de ce module.
+**Note:** Automatic wiring from environment variables
+(`AGENT_INFER_BASE_URL`, `AGENT_INFER_API_KEY`, `AGENT_LORA_MODELS`) is
+planned at the runtime assembly level (sub-project D) and is not yet
+active in this package. These variable names remain discoverable for
+documentation purposes, but are not read by this module's code.
 
-Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
-(`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
+Without a configured inference backend, the NL path returns an explicit
+error (`NoInferenceBackend`); the structured path always remains available.
 
 ---
 
-## Démarrage
+## Getting started
 
 ### Tool-agent server
 
@@ -171,7 +173,7 @@ Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
 python server.py
 ```
 
-Lance le serveur d'agents sur le port 3000. Le coordinateur y accède via `AGENT_SERVER_URL`.
+Starts the agent server on port 3000. The coordinator reaches it via `AGENT_SERVER_URL`.
 
 ### Dashboard
 
@@ -179,9 +181,9 @@ Lance le serveur d'agents sur le port 3000. Le coordinateur y accède via `AGENT
 python dashboard/app.py
 ```
 
-Lance l'interface temps réel sur le port 8080 (visualisation et approbation des checkpoints).
+Starts the real-time interface on port 8080 (checkpoint visualization and approval).
 
-### Lancer le coordinateur
+### Running the coordinator
 
 ```bash
 export COORDINATOR_API_KEY=...            # clé d'auth (obligatoire)
@@ -191,9 +193,10 @@ export AGENT_SERVER_URL=http://localhost:3000   # serveur d'agents
 cyber-coordinator                          # lance uvicorn sur COORDINATOR_HOST:PORT (défaut 127.0.0.1:8080)
 ```
 
-Le coordinateur refuse de démarrer si une variable obligatoire manque ou si
-`policy.yml` est invalide (fail-closed). Copier `policy.example.yml` comme point
-de départ. `GET /coordinator/health` sert la readiness (sans auth).
+The coordinator refuses to start if a mandatory variable is missing or if
+`policy.yml` is invalid (fail-closed). Copy `policy.example.yml` as a
+starting point. `GET /coordinator/health` serves the readiness probe
+(no auth).
 
 ---
 
@@ -201,7 +204,7 @@ de départ. `GET /coordinator/health` sert la readiness (sans auth).
 
 ### `GET /capabilities`
 
-Découverte dynamique des fonctions disponibles.
+Dynamic discovery of the available functions.
 
 ```json
 {
@@ -224,7 +227,7 @@ Découverte dynamique des fonctions disponibles.
 
 ### `POST /agent/execute`
 
-Exécute une commande en langage naturel.
+Executes a natural-language command.
 
 ```bash
 curl -X POST http://localhost:3000/agent/execute \
@@ -233,7 +236,7 @@ curl -X POST http://localhost:3000/agent/execute \
   -d '{"command": "ban IP 1.2.3.4 pour 24h"}'
 ```
 
-**Réponse :**
+**Response:**
 
 ```json
 {
@@ -245,46 +248,72 @@ curl -X POST http://localhost:3000/agent/execute \
 }
 ```
 
-Codes d'erreur retournés au coordinateur :
+Error codes returned to the coordinator:
 
-| Code | Signification |
+| Code | Meaning |
 |---|---|
-| `FUNCTION_UNKNOWN` | Aucun agent n'a reconnu la commande |
-| `MISSING_ARG` | Argument obligatoire absent |
-| `EXECUTION_ERROR` | Exception lors de l'exécution |
-| `API_UNREACHABLE` | Timeout / connexion refusée |
-| `PERMISSION_DENIED` | HTTP 401/403 de l'équipement |
+| `FUNCTION_UNKNOWN` | No agent recognized the command |
+| `MISSING_ARG` | Required argument missing |
+| `EXECUTION_ERROR` | Exception during execution |
+| `API_UNREACHABLE` | Timeout / connection refused |
+| `PERMISSION_DENIED` | HTTP 401/403 from the device |
 
 ---
 
-## Décisions d'architecture
+## Architecture decisions
 
-### Architecture mixin (OPNsense)
+### Mixin architecture (OPNsense)
 
-OPNsense concentre 102 fonctions sur 13 domaines. Le code est découpé en mixins par domaine fonctionnel (`_filters.py`, `_aliases.py`, `_nat.py`…) et assemblé dans `_base.py` par héritage multiple. Python MRO chaîne automatiquement les `_register_functions()`.
+OPNsense concentrates 102 functions across 13 domains. The code is split into mixins by functional domain (`_filters.py`, `_aliases.py`, `_nat.py`…) and assembled in `_base.py` via multiple inheritance. Python MRO automatically chains the `_register_functions()` calls.
 
-WireGuard (11 fonctions) et CrowdSec (15 fonctions) restent en fichier unique — les mixins n'apportent de la valeur qu'au-delà de ~15-20 fonctions sur des domaines distincts.
+WireGuard (11 functions) and CrowdSec (15 functions) remain single-file — mixins only add value beyond ~15-20 functions across distinct domains.
 
-### Multi-LoRA dynamique
+### Dynamic multi-LoRA
 
-Un seul moteur vLLM charge le modèle de base une fois et swap les adapters LoRA à la volée selon l'agent appelé. La découverte des adapters compatibles est automatique au démarrage (filtrage par `base_model_name_or_path`).
+A single vLLM engine loads the base model once and swaps LoRA adapters on the fly depending on the agent called. Discovery of compatible adapters is automatic at startup (filtered by `base_model_name_or_path`).
 
-### Checkpoint humain
+### Human checkpoint
 
-Avant toute action irréversible, le coordinateur suspend l'exécution et attend une approbation explicite via le dashboard ou l'API. Timeout configurable (`CHECKPOINT_TIMEOUT`, défaut 300s).
+Before any irreversible action, the coordinator suspends execution and waits for explicit approval via the dashboard or the API. Configurable timeout (`CHECKPOINT_TIMEOUT`, default 300s).
 
 ---
 
-## Modèles publiés
+## Published models
 
-Adapters LoRA fine-tunés sur **Qwen2.5-3B-Instruct**, entraînés avec Unsloth sur RTX 4070 Ti, publiés sur HuggingFace.
+LoRA adapters fine-tuned on **Qwen2.5-3B-Instruct**, trained with Unsloth on an RTX 4070 Ti, published on HuggingFace.
 
-| Modèle | Fonctions | Score | Lien |
+| Model | Functions | Score | Link |
 |---|---|---|---|
 | OPNsense agent | 102 (firewall, NAT, IDS, IPsec, ACME, traffic shaping…) | 102/102 — 100% | [patlegu/opnsense-qwen25-lora](https://huggingface.co/patlegu/opnsense-qwen25-lora) |
-| WireGuard agent | 11 (tunnels, peers, clés, routage) | 11/11 — 100% | [patlegu/wireguard-qwen25-lora](https://huggingface.co/patlegu/wireguard-qwen25-lora) |
-| CrowdSec agent | 15 (bans, décisions, alertes, simulation) | 15/15 — 100% | [patlegu/crowdsec-qwen25-lora](https://huggingface.co/patlegu/crowdsec-qwen25-lora) |
+| WireGuard agent | 11 (tunnels, peers, keys, routing) | 11/11 — 100% | [patlegu/wireguard-qwen25-lora](https://huggingface.co/patlegu/wireguard-qwen25-lora) |
+| CrowdSec agent | 15 (bans, decisions, alerts, simulation) | 15/15 — 100% | [patlegu/crowdsec-qwen25-lora](https://huggingface.co/patlegu/crowdsec-qwen25-lora) |
 
-Les 3 adapters partagent la même base — ils sont chargés simultanément par vLLM en **multi-LoRA dynamique** (swap à la volée sans recharger le backbone).
+All 3 adapters share the same base — they are loaded simultaneously by vLLM in **dynamic multi-LoRA** mode (swapped on the fly without reloading the backbone).
 
-La vérification fonctionnelle est réalisée par injection de paquets CAP v1 (format production) via les scripts `verify_*_qwen25.py`.
+Functional verification is performed by injecting CAP v1 packets (production format) via the `verify_*_qwen25.py` scripts.
+
+---
+
+## Docker deployment
+
+```bash
+cp .env.example .env
+# Generate the Fernet session key:
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Fill in .env (COORDINATOR_API_KEY, COORDINATOR_SESSION_KEY, AGENT_API_KEY, LLM backend)
+# Provide a policy:
+cp policy.example.yml policy.yml
+docker compose up -d
+curl http://localhost:8080/coordinator/health   # {"status":"ok"}
+```
+
+The agent server is not exposed on the host; only the coordinator is. The
+coordinator refuses to start if a mandatory variable is missing or `policy.yml` is
+invalid (fail-closed). GPU image: documented override (CUDA base + `pip install
+.[gpu]`), out of scope by default.
+
+## License
+
+This program is free software under **AGPL-3.0-or-later** — see [LICENSE](LICENSE).
+Any provision as a network service must be accompanied by publication of the
+modified source code.
