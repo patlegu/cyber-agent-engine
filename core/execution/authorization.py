@@ -8,8 +8,6 @@ Fabriquer un ``Authorized`` hors de ces fabriques est impossible (sentinelle pri
 
 from __future__ import annotations
 
-from typing import Any
-
 from core.policy.models import Intention, Verdict
 
 _GRANT = object()  # sentinelle privée au module
@@ -24,7 +22,7 @@ class Authorized:
 
     __slots__ = ("intention",)
 
-    def __init__(self, intention: Intention, _grant: Any) -> None:
+    def __init__(self, intention: Intention, _grant: object) -> None:
         if _grant is not _GRANT:
             raise TypeError("Authorized ne peut être construit que par grant()/grant_approved()")
         self.intention = intention
