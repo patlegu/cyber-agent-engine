@@ -11,11 +11,12 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, Depends
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
+
+from core.auth.api_key import load_auth_secret, make_auth_dependency
 
 # Add project root to path
 ROOT_DIR = Path(__file__).parent
@@ -50,22 +51,13 @@ OPNSENSE_KEY    = os.getenv("OPNSENSE_API_KEY")
 OPNSENSE_SECRET = os.getenv("OPNSENSE_API_SECRET")
 CROWDSEC_URL    = os.getenv("CROWDSEC_URL", "http://localhost:8080/v1")
 CROWDSEC_KEY    = os.getenv("CROWDSEC_API_KEY")
-AGENT_API_KEY   = os.getenv("AGENT_API_KEY")
 VLLM_PORT       = 8000
 CORS_ORIGINS    = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if o.strip()]
 
-# Auth — header X-API-Key
-_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
-
-async def verify_api_key(key: Optional[str] = Depends(_api_key_header)):
-    """Vérifie la clé API. Si AGENT_API_KEY n'est pas configurée, accès libre (mode dev)."""
-    if not AGENT_API_KEY:
-        return  # dev mode : pas de clé configurée
-    if key != AGENT_API_KEY:
-        raise HTTPException(
-            status_code=401,
-            detail={"error": "UNAUTHORIZED", "message": "Invalid or missing X-API-Key header"}
-        )
+# Auth — header X-API-Key, fail-closed : sans AGENT_API_KEY configurée, le
+# serveur refuse de démarrer (AuthNotConfigured levée par load_auth_secret).
+_AGENT_SECRET = load_auth_secret(os.environ, "AGENT_API_KEY")
+verify_api_key = make_auth_dependency(_AGENT_SECRET)
 
 # Data Models — les contrats API inter-services sont dans agents/contracts.py
 # CommandRequest conservé comme alias pour la rétrocompatibilité des clients existants
@@ -157,9 +149,6 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting Cyber Agent Server...")
     global vllm_client, _http_client, _opnsense_http_client
-
-    if not AGENT_API_KEY:
-        logger.warning("⚠️  AGENT_API_KEY non configurée — le serveur est accessible sans authentification (mode dev)")
 
     # Persistent HTTP clients for health checks
     _http_client = httpx.AsyncClient(timeout=httpx.Timeout(0.5))
@@ -302,40 +291,8 @@ async def execute_command(request: AgentExecuteRequest) -> AgentExecuteResponse:
             return JSONResponse(status_code=400, content=resp.model_dump())
         return resp
 
-    # --- Mode CAP v1 : détecter directive JSON et dispatcher structurellement ---
-    # Le coordinateur envoie {"directive": "fn", "args": {...}, "entities": {...}, "context": {...}}
-    # Quand directive + args sont présents, on bypasse vLLM (fiable > parsing text fragile).
-    command = request.command
-    if command and command.strip().startswith("{"):
-        try:
-            import json as _json
-            cap = _json.loads(command)
-            directive = cap.get("directive")
-            cap_args = cap.get("args") or {}
-            entities = cap.get("entities") or {}
-            # Fusionner les entités NER dans les args (premier hit de chaque type)
-            _ner_map = {
-                "IP_ADDRESS": "source", "IP_SUBNET": "source",
-                "PORT_NUMBER": "port", "HOSTNAME": "hostname",
-            }
-            for ner_key, arg_key in _ner_map.items():
-                vals = entities.get(ner_key, [])
-                if vals and arg_key not in cap_args:
-                    cap_args[arg_key] = vals[0]
-            if directive:
-                logger.info(f"📥 CAP directive: {directive}({cap_args})")
-                target_agent_name, _, _ = _classifier.classify(directive)
-                agent = agents.get(target_agent_name) or next(iter(agents.values()), None)
-                if agent:
-                    result = await agent.execute_direct(directive, cap_args)
-                    resp = _response(result)
-                    if not result.success:
-                        return JSONResponse(status_code=400, content=resp.model_dump())
-                    return resp
-        except Exception:
-            pass  # JSON invalide ou directive absente → mode naturel
-
     # --- Mode naturel : classification + inférence LLM ---
+    command = request.command
     logger.info(f"📥 Received command: {command}")
     target_agent_name, confidence, _entities = _classifier.classify(command)
     logger.info(f"Intent classified as '{target_agent_name}' (confidence={confidence:.2f})")

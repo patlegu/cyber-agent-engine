@@ -399,7 +399,24 @@ class ToolAgent(ABC):
             ToolResult (même format que execute())
         """
         import time
+
+        from .coercion import CoercionError, coerce_args
         start_time = time.time()
+        func = self._functions.get(function)
+        if func is not None:
+            try:
+                args = coerce_args(func, args)
+            except CoercionError as exc:
+                return ToolResult(
+                    success=False,
+                    function=function,
+                    args=args,
+                    result=None,
+                    error=str(exc),
+                    error_code=ErrorCode.MISSING_ARG,
+                    tool_name=self.tool_name,
+                    execution_time_ms=(time.time() - start_time) * 1000,
+                )
         function_call = FunctionCall(
             function=function,
             args=args,
