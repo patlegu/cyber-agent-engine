@@ -11,6 +11,7 @@ pur et déterministe ; l'unicité est garantie par le serveur en amont).
 from __future__ import annotations
 
 import hashlib
+import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -29,7 +30,7 @@ class ApprovalNotFound(Exception):
 
 
 class Approval(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     id: str
     intention: Intention
@@ -38,7 +39,8 @@ class Approval(BaseModel):
 
 
 def intention_hash(intention: Intention) -> str:
-    canonical = intention.model_dump_json()  # Pydantic ordonne les clés de façon stable
+    """Hash canonique de l'intention : clés triées, insensible à l'ordre d'insertion des args."""
+    canonical = json.dumps(intention.model_dump(), sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

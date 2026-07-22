@@ -49,3 +49,18 @@ def test_reject_bloque_l_autorisation() -> None:
     assert ap.state == "rejected"
     with pytest.raises(NotAuthorized):
         grant_approved(ap)
+
+
+def test_approval_est_immuable() -> None:
+    import pytest as _pytest
+    from pydantic import ValidationError
+
+    ap = ApprovalStore().create(_it())
+    with _pytest.raises(ValidationError):
+        ap.state = "approved"  # frozen : mutation directe interdite
+
+
+def test_hash_insensible_a_l_ordre_des_cles() -> None:
+    a = Intention(capability="opnsense.add_nat", args={"interface": "wan", "port": "443"})
+    b = Intention(capability="opnsense.add_nat", args={"port": "443", "interface": "wan"})
+    assert intention_hash(a) == intention_hash(b)  # canonique : ordre des cles indifferent
