@@ -12,6 +12,10 @@ from core.auth.api_key import AuthNotConfigured
 DEFAULT_PORT = 8080
 DEFAULT_SERVER_URL = "http://localhost:3000"
 TEST_PORT = 9000
+DEFAULT_AUDIT_MAX_BYTES = 104857600
+DEFAULT_AUDIT_BACKUPS = 5
+TEST_AUDIT_MAX_BYTES = 1000
+TEST_AUDIT_BACKUPS = 3
 
 
 def _base_env(**over: str) -> dict[str, str]:
@@ -67,3 +71,33 @@ def test_overrides_applied() -> None:
     )
     assert cfg.port == TEST_PORT
     assert cfg.agent_server_sock == "/run/a.sock"
+
+
+def test_audit_rotation_defaults() -> None:
+    """Charge les valeurs par défaut pour la rotation d'audit."""
+    cfg = load_config(_base_env())
+    assert cfg.audit_max_bytes == DEFAULT_AUDIT_MAX_BYTES
+    assert cfg.audit_backups == DEFAULT_AUDIT_BACKUPS
+
+
+def test_audit_rotation_overrides() -> None:
+    """Surcharge les paramètres de rotation d'audit."""
+    cfg = load_config(
+        _base_env(
+            COORDINATOR_AUDIT_MAX_BYTES=str(TEST_AUDIT_MAX_BYTES),
+            COORDINATOR_AUDIT_BACKUPS=str(TEST_AUDIT_BACKUPS),
+        )
+    )
+    assert cfg.audit_max_bytes == TEST_AUDIT_MAX_BYTES and cfg.audit_backups == TEST_AUDIT_BACKUPS
+
+
+def test_agent_servers_defaults_to_single_url() -> None:
+    """Agent_servers par défaut utilise AGENT_SERVER_URL."""
+    cfg = load_config(_base_env())
+    assert cfg.agent_servers == ["http://localhost:3000"]
+
+
+def test_agent_servers_parsed_from_csv() -> None:
+    """Agent_servers parse une liste CSV avec trim des espaces."""
+    cfg = load_config(_base_env(AGENT_SERVERS="http://a:3000, http://b:3000 ,"))
+    assert cfg.agent_servers == ["http://a:3000", "http://b:3000"]

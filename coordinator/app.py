@@ -25,7 +25,7 @@ from pydantic import BaseModel
 
 from coordinator.assembly import assemble_loop
 from coordinator.clients.tool_agent_client import ToolAgentClient
-from coordinator.config import load_config
+from coordinator.config import CoordinatorConfig, load_config
 from coordinator.llm.coordinator_llm import CoordinatorLLM
 from coordinator.loop import Completed, Denied, Failed, GatedLoop, LoopResult, Suspended
 from core.auth.api_key import make_auth_dependency
@@ -87,6 +87,24 @@ def build_app(*, loop: GatedLoop, auth_secret: str) -> FastAPI:
     return app
 
 
+def build_agent_clients(config: CoordinatorConfig) -> list[ToolAgentClient]:
+    """Construit un ToolAgentClient par serveur d'agents déclaré.
+
+    Le socket UDS (`agent_server_sock`) n'a de sens qu'en mode mono-serveur ; en
+    multi-serveur (URLs multiples) chaque client est en TCP sur son URL.
+    """
+    if len(config.agent_servers) == 1:
+        return [ToolAgentClient(
+            base_url=config.agent_servers[0],
+            api_key=config.agent_server_key,
+            socket_path=config.agent_server_sock,
+        )]
+    return [
+        ToolAgentClient(base_url=url, api_key=config.agent_server_key, socket_path="")
+        for url in config.agent_servers
+    ]
+
+
 def create_default_app() -> FastAPI:
     """Assemble l'app runtime depuis l'environnement (fail-closed sur secrets).
 
@@ -100,30 +118,36 @@ def create_default_app() -> FastAPI:
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-        client = ToolAgentClient(
-            base_url=config.agent_server_url,
-            api_key=config.agent_server_key,
-            socket_path=config.agent_server_sock,
-        )
         # ToolAgentClient/CoordinatorLLM (autres sous-projets) ne sont pas
         # entièrement typés — no-untyped-call ignoré ponctuellement ici plutôt
         # que d'étendre le périmètre mypy strict à des modules hors scope.
         #
-        # Le try démarre dès l'ouverture du client : si llm.init() ou
-        # assemble_loop() lève, le client doit quand même être fermé (sinon
-        # fuite de socket). llm n'est fermé que s'il a été initialisé avec
-        # succès — un échec de llm.init() ne doit pas appeler shutdown() sur
-        # un LLM à moitié construit.
-        await client.__aenter__()  # type: ignore[no-untyped-call]
+        # Le try démarre dès l'ouverture du premier client : si un client
+        # suivant, llm.init() ou assemble_loop() lève, tous les clients déjà
+        # ouverts doivent quand même être fermés (sinon fuite de socket/connexion).
+        # `opened` ne trace que les clients réellement entrés, pas juste
+        # construits. llm n'est fermé que s'il a été initialisé avec succès —
+        # un échec de llm.init() ne doit pas appeler shutdown() sur un LLM à
+        # moitié construit.
+        clients = build_agent_clients(config)
+        opened: list[ToolAgentClient] = []
         llm = CoordinatorLLM()  # type: ignore[no-untyped-call]
         llm_initialized = False
         try:
+            for client in clients:
+                await client.__aenter__()  # type: ignore[no-untyped-call]
+                opened.append(client)
             await llm.init()
             llm_initialized = True
-            app.state.loop = await assemble_loop(config, client, llm)
+            # list() plutôt que `clients` telle quelle : list[ToolAgentClient] n'est
+            # pas un sous-type de list[AgentClientLike] (List est invariant), même
+            # si chaque ToolAgentClient satisfait le Protocol ; list() reconstruit
+            # une liste dont mypy infère l'élément depuis le type attendu du paramètre.
+            app.state.loop = await assemble_loop(config, list(clients), llm)
             yield
         finally:
-            await client.__aexit__(None, None, None)  # type: ignore[no-untyped-call]
+            for client in opened:
+                await client.__aexit__(None, None, None)  # type: ignore[no-untyped-call]
             if llm_initialized:
                 await llm.shutdown()
 
