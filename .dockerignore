@@ -1,0 +1,12 @@
+.venv
+tests
+docs
+.git
+.gitignore
+dist
+build
+*.egg-info
+__pycache__
+*.pyc
+.superpowers
+.env

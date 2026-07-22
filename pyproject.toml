@@ -1,13 +1,22 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "cyber-agent-engine"
 version = "1.0.0"
-description = "Autonomous factory component for LoRA generation and network agents"
+description = "Trust-cored multi-agent network-security coordinator (fail-closed policy, PII tokenization, human approval)"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+authors = [{ name = "patlegu", email = "patrice.leguyader@gmail.com" }]
+keywords = ["security", "network", "llm-agents", "purple-team", "crowdsec", "opnsense", "wireguard"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Security",
+    "Intended Audience :: System Administrators",
+]
 dependencies = [
     "pydantic>=2.0.0",
     "httpx>=0.25.0",
@@ -29,10 +38,22 @@ gpu = [
     "vllm>=0.6.0",
     "unsloth",
 ]
+dev = [
+    "build>=1.0",
+    "pytest>=8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/patlegu/cyber-agent-engine"
+Repository = "https://github.com/patlegu/cyber-agent-engine"
+Issues = "https://github.com/patlegu/cyber-agent-engine/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["core*", "clients*", "agents*", "coordinator*"]
+
+[tool.setuptools.package-data]
+agents = ["manifests/*.yml"]
 
 [tool.ruff]
 line-length = 100
