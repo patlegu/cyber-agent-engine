@@ -7,6 +7,7 @@ ne doivent être importées que dans les points d'entrée qui en ont réellement
 besoin (chargement paresseux), pas au simple import du package.
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -37,4 +38,19 @@ def test_import_clients_is_light():
 
 def test_import_coordinator_app_is_light():
     r = _import_in_subprocess("coordinator.app")
+    assert r.returncode == 0, r.stderr
+
+
+def test_import_server_is_light():
+    code = (
+        "import sys\n"
+        "import server\n"
+        "heavy = {'torch', 'vllm', 'unsloth'} & set(sys.modules)\n"
+        "assert not heavy, f'deps lourdes importees au chargement: {heavy}'\n"
+    )
+    r = subprocess.run(
+        [sys.executable, "-c", code], cwd=str(_ROOT),
+        capture_output=True, text=True, env={**os.environ, "AGENT_API_KEY": "x"},
+        check=False,
+    )
     assert r.returncode == 0, r.stderr

@@ -168,7 +168,7 @@ Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
 python server.py
 
 # Coordinateur (port 3001)
-python -m coordinator.server
+# L'entrypoint runtime du coordinateur est fourni au sous-projet D (assemblage runtime).
 
 # Dashboard (port 8080)
 python dashboard/app.py

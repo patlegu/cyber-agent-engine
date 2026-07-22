@@ -48,7 +48,7 @@ Supporte deux plateformes :
 
 3. Vérifier le schéma généré :
 
-       python factory/scripts/extract_wireguard_tools.py
+       python scripts/extract_wireguard_tools.py
 
 ---
 
