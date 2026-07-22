@@ -26,3 +26,17 @@ async def test_unknown_agent_raises():
     call = make_agent_call({"crowdsec": _FakeClient()})
     with pytest.raises(UnknownAgent):
         await call("opnsense.add_nat", {})
+
+
+@pytest.mark.asyncio
+async def test_capability_without_dot_raises():
+    call = make_agent_call({"crowdsec": _FakeClient()})
+    with pytest.raises(UnknownAgent):
+        await call("nodot", {})
+
+
+@pytest.mark.asyncio
+async def test_trailing_dot_empty_function_raises():
+    call = make_agent_call({"crowdsec": _FakeClient()})
+    with pytest.raises(UnknownAgent):
+        await call("crowdsec.", {})
