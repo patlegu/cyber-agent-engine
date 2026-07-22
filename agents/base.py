@@ -15,11 +15,7 @@ import json
 import os
 
 from .errors import ErrorCode
-
-try:
-    from factory.clients.native_vllm_client import TOOL_CALL_SCHEMA
-except ImportError:
-    TOOL_CALL_SCHEMA = None
+from clients.tool_call_schema import TOOL_CALL_SCHEMA
 
 logger = logging.getLogger(__name__)
 

@@ -14,22 +14,7 @@ try:
 except ImportError:
     _STRUCTURED_OUTPUT_AVAILABLE = False
 
-# Schéma JSON minimal pour la sortie tool_calls des agents SLM.
-# Garantit : tableau JSON valide, chaque élément a "name" (str) et "arguments" (objet).
-# Les arguments eux-mêmes ne sont pas contraints ici — validation déléguée au CAPValidator.
-TOOL_CALL_SCHEMA: dict = {
-    "type": "array",
-    "items": {
-        "type": "object",
-        "properties": {
-            "name":      {"type": "string"},
-            "arguments": {"type": "object"},
-        },
-        "required": ["name", "arguments"],
-    },
-    "minItems": 1,
-    "maxItems": 1,
-}
+from clients.tool_call_schema import TOOL_CALL_SCHEMA  # ré-export rétro-compatible
 
 logger = logging.getLogger(__name__)
 
