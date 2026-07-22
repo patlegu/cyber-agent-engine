@@ -14,7 +14,8 @@ venv/
 # Build
 build/
 dist/
-dashboard/static/          # bundle Vite compile : ne jamais committer (inline les secrets de build)
+# bundle Vite compile : ne jamais committer (inline les secrets de build)
+dashboard/static/
 *.egg-info/
 .vscode/
 .idea/
@@ -48,3 +49,6 @@ dashboard/frontend/.env
 sops.yaml
 .sops.yaml
 .aider*
+
+# Scratchpad orchestration (subagent-driven development)
+.superpowers/
