@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1
+# Variante GPU : sert les LoRA in-process (backend vllm coordinateur / loader agent).
+# Override optionnel : docker build -f Dockerfile.gpu -t cyber-agent-engine:gpu .
+# La commande reelle (uvicorn server:app OU cyber-coordinator) est fournie au run.
+
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.11 python3.11-venv python3-pip \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.11 /usr/local/bin/python
+RUN useradd --create-home --uid 10001 appuser
+WORKDIR /app
+COPY pyproject.toml MANIFEST.in README.md ./
+COPY core ./core
+COPY coordinator ./coordinator
+COPY agents ./agents
+COPY clients ./clients
+COPY server.py ./
+COPY dashboard ./dashboard
+RUN python -m pip install --no-cache-dir --upgrade "pip" "setuptools>=77" wheel \
+    && python -m pip install --no-cache-dir ".[gpu]"
+RUN mkdir -p /data && chown appuser:appuser /data
+USER appuser
+CMD ["cyber-coordinator"]
