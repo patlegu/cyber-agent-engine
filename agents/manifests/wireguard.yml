@@ -1,0 +1,26 @@
+# agents/manifests/wireguard.yml
+# Capacités déclarées de l'agent WireGuard (source de vérité pour catalogue + conformance).
+agent: wireguard
+capabilities:
+  - name: create_site_to_site_tunnel
+    required_args: [site_a, site_b]
+  - name: create_point_to_point_tunnel
+    required_args: [local_ip, remote_ip, remote_endpoint]
+  - name: create_mesh_network
+    required_args: [nodes]
+  - name: get_tunnel_status
+    required_args: []
+  - name: rotate_keys
+    required_args: [interface]
+  - name: verify_routing
+    required_args: [tunnel_config]
+  - name: add_wireguard_server
+    required_args: [server]
+  - name: add_wireguard_client
+    required_args: [client]
+  - name: generate_wireguard_keypair
+    required_args: []
+  - name: generate_wireguard_psk
+    required_args: []
+  - name: get_wireguard_status
+    required_args: []
