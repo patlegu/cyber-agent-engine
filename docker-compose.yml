@@ -1,0 +1,47 @@
+# docker-compose.yml — déploiement de référence (2 processus).
+# Le serveur d'agents n'est PAS exposé à l'hôte ; seul le coordinateur l'est.
+services:
+  agent-server:
+    build: .
+    command: uvicorn server:app --host 0.0.0.0 --port 3000
+    env_file: .env
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:3000/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  coordinator:
+    build: .
+    command: cyber-coordinator
+    env_file: .env
+    environment:
+      AGENT_SERVER_URL: "http://agent-server:3000"
+      COORDINATOR_HOST: "0.0.0.0"
+      COORDINATOR_POLICY_FILE: "/policy/policy.yml"
+      COORDINATOR_AUDIT_FILE: "/data/audit.jsonl"
+      COORDINATOR_SESSION_DIR: "/data/sessions"
+    ports:
+      - "${COORDINATOR_PORT:-8080}:8080"
+    volumes:
+      - ./policy.yml:/policy/policy.yml:ro
+      - coordinator-data:/data
+    depends_on:
+      agent-server:
+        condition: service_healthy
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/coordinator/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  coordinator-data:
