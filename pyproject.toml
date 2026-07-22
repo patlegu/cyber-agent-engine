@@ -13,6 +13,7 @@ dependencies = [
     "httpx>=0.25.0",
     "pyyaml>=6.0",
     "jinja2>=3.0.0",
+    "cryptography>=42.0.0",
 ]
 
 [tool.setuptools.packages.find]

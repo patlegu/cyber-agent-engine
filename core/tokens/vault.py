@@ -42,6 +42,19 @@ class Vault:
         """Copie de la table jeton→valeur émise dans cette session."""
         return dict(self._to_real)
 
+    def snapshot(self) -> dict[str, Any]:
+        """État sérialisable du vault (pour persistance de session)."""
+        return {"to_real": dict(self._to_real), "counters": dict(self._counters)}
+
+    @classmethod
+    def restore(cls, snap: dict[str, Any]) -> Vault:
+        """Reconstruit un vault depuis un ``snapshot()`` : bijection et compteurs repris."""
+        v = cls()
+        v._to_real = dict(snap.get("to_real", {}))
+        v._to_token = {real: tok for tok, real in v._to_real.items()}
+        v._counters = dict(snap.get("counters", {}))
+        return v
+
 
 def tokenize(text: str, vault: Vault, extract: ExtractFn) -> str:
     """Remplace chaque entité sensible détectée par son jeton stable de session."""
