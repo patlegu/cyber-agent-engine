@@ -9,6 +9,7 @@ plutôt que de laisser crasher l'appel réel.
 from __future__ import annotations
 
 import inspect
+import types
 import typing
 from collections.abc import Callable
 from typing import Any
@@ -23,7 +24,7 @@ _FALSE = {"false", "0"}
 
 
 def _unwrap_optional(ann: Any) -> Any:
-    if typing.get_origin(ann) in (typing.Union, __import__("types").UnionType):
+    if typing.get_origin(ann) in (typing.Union, types.UnionType):
         non_none = [a for a in typing.get_args(ann) if a is not type(None)]
         if len(non_none) == 1:
             return non_none[0]
@@ -33,10 +34,12 @@ def _unwrap_optional(ann: Any) -> Any:
 def _coerce_one(name: str, value: str, ann: Any) -> Any:
     ann = _unwrap_optional(ann)
     if typing.get_origin(ann) is typing.Literal:
-        allowed = [str(v) for v in typing.get_args(ann)]
-        if value not in allowed:
-            raise CoercionError(f"{name}={value!r} hors domaine {allowed}")
-        return value
+        members = typing.get_args(ann)
+        for member in members:
+            if str(member) == value:
+                return member
+        allowed = [str(v) for v in members]
+        raise CoercionError(f"{name}={value!r} hors domaine {allowed}")
     if ann is int:
         try:
             return int(value)
