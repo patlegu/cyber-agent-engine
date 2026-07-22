@@ -99,7 +99,7 @@ class ToolAgent(ABC):
         # Client Ollama (lazy init)
         self.ollama_client = None
         if self.ollama_config and self.ollama_config.get('model'):
-            from factory.clients.ollama_client import OllamaClient
+            from clients.ollama_client import OllamaClient
             self.ollama_client = OllamaClient(
                 base_url=self.ollama_config.get('url', 'http://localhost:11434')
             )

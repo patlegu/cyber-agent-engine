@@ -28,7 +28,6 @@ from agents.crowdsec_agent import CrowdSecAgent
 from agents.base import ToolResult
 from agents.classifier import AgentClassifier
 from agents.contracts import AgentExecuteRequest, AgentExecuteResponse
-from factory.clients.native_vllm_client import NativeVLLMClient
 
 # Configure Logging
 logging.basicConfig(
@@ -164,6 +163,8 @@ async def lifespan(app: FastAPI):
         lora_adapters = _discover_lora_adapters(ROOT_DIR / "loras", base_model)
         if lora_adapters:
             logger.info(f"🧠 Initializing vLLM Engine (base: {base_model}) with adapters: {list(lora_adapters.keys())}")
+            from clients.gpu import load_native_vllm_client
+            NativeVLLMClient = load_native_vllm_client()  # lève GpuExtraRequired si [gpu] absent
             vllm_client = NativeVLLMClient(
                 model_path=base_model,
                 lora_adapters=lora_adapters,

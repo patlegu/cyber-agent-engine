@@ -147,7 +147,7 @@ class OPNsenseAgent(
         # Initialisation du client API selon la plateforme
         if self.platform == "opnsense":
             if api_config and all(k in api_config for k in ['base_url', 'api_key', 'api_secret']):
-                from factory.clients import OPNsenseAPIClient
+                from clients import OPNsenseAPIClient
                 self._api_client = OPNsenseAPIClient(
                     base_url=api_config['base_url'],
                     api_key=api_config['api_key'],
@@ -161,7 +161,7 @@ class OPNsenseAgent(
 
         elif self.platform == "pfsense":
             if api_config and all(k in api_config for k in ['base_url', 'api_key']):
-                from factory.clients.pfsense_client import PfSenseClient
+                from clients.pfsense_client import PfSenseClient
                 self._api_client = PfSenseClient(
                     base_url=api_config['base_url'],
                     api_key=api_config['api_key'],
@@ -172,7 +172,7 @@ class OPNsenseAgent(
                 logger.debug("pfSense: Initialisé sans API (mode locale/simulation)")
 
         elif self.platform == "linux":
-            from factory.clients.linux_sys_client import LinuxSysClient
+            from clients.linux_sys_client import LinuxSysClient
             self._api_client = LinuxSysClient(config=api_config)
             logger.info("✓ Client Système Linux initialisé (Polyfill)")
 

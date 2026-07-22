@@ -56,7 +56,7 @@ class PfSenseAgent(OPNsenseAgent):
         # Remplacer le client API par un client pfSense
         self._api_client = None
         if api_config and all(k in api_config for k in ['base_url', 'api_key', 'api_secret']):
-            from factory.clients.pfsense_api_client import PfSenseAPIClient
+            from clients.pfsense_api_client import PfSenseAPIClient
             
             self._api_client = PfSenseAPIClient(
                 base_url=api_config['base_url'],
