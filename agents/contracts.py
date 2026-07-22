@@ -7,7 +7,7 @@ Toute modification ici affecte simultanément server.py et coordinator/.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -31,11 +31,11 @@ class AgentExecuteRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    command: Optional[str] = Field(
+    command: str | None = Field(
         default=None,
         description="Commande NL (mode debug).",
     )
-    function: Optional[str] = Field(
+    function: str | None = Field(
         default=None,
         description="Fonction à appeler (mode structuré).",
     )
@@ -78,8 +78,8 @@ class AgentExecuteResponse(BaseModel):
     function: str = ""
     args: dict[str, str] = Field(default_factory=dict)
     result: Any = None
-    error: Optional[str] = None
-    error_code: Optional[ErrorCode] = None
+    error: str | None = None
+    error_code: ErrorCode | None = None
     reasoning: str = ""
     execution_time_ms: float = 0.0
 
