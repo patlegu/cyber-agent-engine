@@ -8,7 +8,7 @@ déclenche un nouvel essai borné, l'erreur étant réinjectée pour guider le L
 from __future__ import annotations
 
 import json
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -29,6 +29,7 @@ class Finish(BaseModel):
 Proposal = Act | Finish
 
 
+@runtime_checkable
 class ChatLLM(Protocol):
     async def chat(self, messages: list[dict[str, str]], max_tokens: int = 1024) -> str: ...
 
