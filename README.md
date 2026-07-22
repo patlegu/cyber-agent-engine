@@ -161,6 +161,26 @@ documentation, mais ne sont pas lus par le code de ce module.
 Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
 (`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
 
+---
+
+## Démarrage
+
+### Tool-agent server
+
+```bash
+python server.py
+```
+
+Lance le serveur d'agents sur le port 3000. Le coordinateur y accède via `AGENT_SERVER_URL`.
+
+### Dashboard
+
+```bash
+python dashboard/app.py
+```
+
+Lance l'interface temps réel sur le port 8080 (visualisation et approbation des checkpoints).
+
 ### Lancer le coordinateur
 
 ```bash
