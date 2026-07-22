@@ -161,18 +161,19 @@ documentation, mais ne sont pas lus par le code de ce module.
 Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
 (`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
 
-## Démarrage
+### Lancer le coordinateur
 
 ```bash
-# Tool-agent server (port 3000)
-python server.py
-
-# Coordinateur (port 3001)
-# L'entrypoint runtime du coordinateur est fourni au sous-projet D (assemblage runtime).
-
-# Dashboard (port 8080)
-python dashboard/app.py
+export COORDINATOR_API_KEY=...            # clé d'auth (obligatoire)
+export COORDINATOR_SESSION_KEY=...        # clé Fernet base64 (obligatoire)
+export COORDINATOR_POLICY_FILE=policy.yml # règles (obligatoire ; cf. policy.example.yml)
+export AGENT_SERVER_URL=http://localhost:3000   # serveur d'agents
+cyber-coordinator                          # lance uvicorn sur COORDINATOR_HOST:PORT (défaut 127.0.0.1:8080)
 ```
+
+Le coordinateur refuse de démarrer si une variable obligatoire manque ou si
+`policy.yml` est invalide (fail-closed). Copier `policy.example.yml` comme point
+de départ. `GET /coordinator/health` sert la readiness (sans auth).
 
 ---
 

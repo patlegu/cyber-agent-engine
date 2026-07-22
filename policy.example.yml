@@ -1,0 +1,16 @@
+# policy.example.yml — exemple de politique du coordinateur.
+# Ordre = priorité : la première règle qui matche gagne ; défaut = deny (fail-closed).
+rules:
+  - match: { capability: "crowdsec.get_*" }
+    effect: allow
+    reason: "lectures crowdsec sans risque (décisions, alertes, métriques)"
+
+  - match:
+      capability: "crowdsec.ban_ip"
+      args: { ip: { op: present } }
+    effect: approve
+    reason: "bannissement d'IP : validation humaine requise"
+
+  - match: { capability: "crowdsec.*" }
+    effect: deny
+    reason: "toute autre action crowdsec refusée par défaut"
