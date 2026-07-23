@@ -233,6 +233,36 @@ map for that agent.
 Without a configured inference backend, the NL path returns an explicit
 error (`NoInferenceBackend`); the structured path always remains available.
 
+### Targeting a real OPNsense (interop)
+
+The OPNsense agent is a plain client of the OPNsense REST API: point it at any
+OPNsense instance's API on its **LAN interface** and it drives the same set of
+canonical functions. The agent server reads:
+
+| Variable              | Role                                                                    |
+|-----------------------|-------------------------------------------------------------------------|
+| `OPNSENSE_URL`        | API base URL on the LAN, e.g. `https://192.168.1.1` (a non-default port such as `:4443` is fine) |
+| `OPNSENSE_API_KEY`    | OPNsense API key                                                        |
+| `OPNSENSE_API_SECRET` | OPNsense API secret                                                     |
+| `OPNSENSE_VERIFY_SSL` | `false` (default) accepts the appliance's self-signed certificate; set `true` with a trusted cert |
+
+Expose the API on the **LAN interface only** (never WAN), and allow the
+agent-server host to reach the API port with a LAN firewall rule. Reachability
+is health-checked against `GET /api/core/system/status`.
+
+**Need a target VM?** [`opnsense-ai-firewall`](https://gitlab.com/llm_tests/opnsense-ai-firewall)
+(a lab project) stands up an OPNsense VM, and it is also the *opposite*
+architecture worth contrasting: it runs the LLM **in-box** (llama-server + LoRA
+inside the firewall, no sidecar), and its own docs measure why that is a poor
+production choice — attack surface, CPU contention, lifecycle, audit.
+`cyber-agent-engine` is the **external** answer to exactly those four points:
+the reasoning LLM lives off-box, so the firewall gains no attack surface and no
+CPU load; the coordinator's lifecycle is independent; and every action passes
+through a fail-closed policy, PII tokenization, human approval, and a bounded
+audit log. Point `OPNSENSE_URL` at that VM's LAN API (e.g.
+`https://<lan-ip>:4443` with `OPNSENSE_VERIFY_SSL=false`) to drive it from the
+outside.
+
 ---
 
 ## Getting started

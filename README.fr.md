@@ -235,6 +235,37 @@ agent.
 Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
 (`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
 
+### Cibler un vrai OPNsense (interop)
+
+L'agent OPNsense est un simple client de l'API REST OPNsense : pointe-le vers
+l'API de n'importe quelle instance OPNsense sur son **interface LAN** et il
+pilote le même jeu de fonctions canoniques. Le serveur d'agents lit :
+
+| Variable              | Rôle                                                                     |
+|-----------------------|--------------------------------------------------------------------------|
+| `OPNSENSE_URL`        | URL de base de l'API sur le LAN, ex. `https://192.168.1.1` (un port non standard comme `:4443` convient) |
+| `OPNSENSE_API_KEY`    | Clé API OPNsense                                                         |
+| `OPNSENSE_API_SECRET` | Secret API OPNsense                                                      |
+| `OPNSENSE_VERIFY_SSL` | `false` (défaut) accepte le certificat auto-signé de l'équipement ; `true` avec un certificat de confiance |
+
+Expose l'API sur l'**interface LAN uniquement** (jamais le WAN), et autorise
+l'hôte du serveur d'agents à joindre le port de l'API via une règle firewall
+LAN. La joignabilité est contrôlée via `GET /api/core/system/status`.
+
+**Besoin d'une VM cible ?** [`opnsense-ai-firewall`](https://gitlab.com/llm_tests/opnsense-ai-firewall)
+(projet de lab) monte une VM OPNsense, et c'est aussi l'architecture *opposée*
+à mettre en regard : il exécute le LLM **dans la boîte** (llama-server + LoRA
+à l'intérieur du firewall, sans sidecar), et sa propre documentation mesure
+pourquoi c'est un mauvais choix en production — surface d'attaque, contention
+CPU, cycle de vie, audit. `cyber-agent-engine` est la réponse **externe** à
+exactement ces quatre points : le LLM de raisonnement vit hors-boîte, donc le
+firewall ne gagne ni surface d'attaque ni charge CPU ; le cycle de vie du
+coordinateur est indépendant ; et chaque action passe par une politique
+fail-closed, la tokenisation des PII, l'approbation humaine et un journal
+d'audit borné. Pointe `OPNSENSE_URL` vers l'API LAN de cette VM (ex.
+`https://<ip-lan>:4443` avec `OPNSENSE_VERIFY_SSL=false`) pour la piloter de
+l'extérieur.
+
 ---
 
 ## Démarrage
