@@ -157,7 +157,7 @@ class AliasesMixin:
                     logger.info(f"✓ {address} removed from {alias}")
                 return response
             except Exception as e:
-                logger.error(f"Alias removal-from error: {e}")
+                logger.error(f"Alias entry removal error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "removed", "alias": alias, "address": address, "mode": "simulation"}

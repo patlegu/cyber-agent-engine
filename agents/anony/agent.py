@@ -393,7 +393,7 @@ class AnonyAgent(ToolAgent):
         self._session_mapping.clear()
         if self._engine is not None:
             self._engine.reset_state()
-        return {"status": "ok", "message": "Session réinitialisée"}
+        return {"status": "ok", "message": "Session reset"}
 
     # ------------------------------------------------------------------
     # Helpers internes
