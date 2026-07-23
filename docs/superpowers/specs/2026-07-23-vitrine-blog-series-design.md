@@ -168,6 +168,34 @@ schéma · liens. Les slugs `url:` sont fixés ici (stabilité des liens croisé
   `tests/test_lint_surface_consistency.py`, `docs/superpowers/specs/`.
 - **Mermaid** : la boucle SDD (implémenteur → revue → fix → revue finale → merge).
 
+## Visuels / bannières d'en-tête (`title_image`)
+
+Génération assistée par un modèle d'images **en ligne** (DALL·E, Flux, Stable
+Diffusion, Midjourney…). **Répartition des rôles** : la rédaction produit un
+**prompt par article + une charte de style commune** ; la **génération des PNG
+est une étape opérateur** (l'environnement de rédaction ne génère pas d'images).
+
+- **Cible** : **6 bannières distinctes sous charte commune verrouillée** (chaque
+  article a son visuel, mais les 6 se lisent comme un ensemble). **Repli** :
+  une **bannière de série unique** réutilisée sur les 6 si la cohérence dérive.
+- **Charte commune** (à figer au plan) : palette + motif + ambiance identiques
+  sur les 6 (même modèle, même style-prompt, **seed fixe** si le service le
+  permet — principal levier de cohérence de série).
+- **Contraintes dures** :
+  - **Aucun texte dans l'image** (les générateurs ratent le texte ; le titre est
+    déjà dans le frontmatter). Bannière = concept/décor.
+  - **Ratio** : les `title_image` du blog sont très larges (~414×114, ≈3.6:1) →
+    générer en 16:9 puis **recadrer**, ou modèle à ratio custom (Flux/SD).
+  - **Licence** : vérifier que le service autorise l'usage blog (la plupart oui ;
+    Midjourney selon le plan) — à confirmer avant publication.
+- **Non bloquant** : les **schémas mermaid** portent déjà le visuel *technique* ;
+  la bannière est décorative. Les articles peuvent partir en `draft` sans
+  `title_image` (ou avec un placeholder) et recevoir la bannière ensuite.
+- **Livrable rédaction** : le plan fournira, par article, le **prompt de
+  génération** (sujet abstrait aligné sur la thèse) référençant la charte
+  commune ; les PNG produits se rangent dans `static/img/` du blog et se câblent
+  via `title_image`.
+
 ## Tests et qualité (relecture éditoriale)
 
 Il n'y a pas de tests automatisés (contenu prose). La qualité est assurée par :
@@ -197,5 +225,5 @@ Il n'y a pas de tests automatisés (contenu prose). La qualité est assurée par
 ## Dette / suites
 
 - Vague 2 (EN) et lien README.
-- Éventuel `title_image` par article (visuel) si une bannière commune ne suffit
-  pas — non bloquant.
+- Génération des bannières `title_image` (étape opérateur, cf. section
+  « Visuels / bannières ») — non bloquant, ajoutable après la mise en `draft`.
