@@ -47,3 +47,13 @@ def test_readmes_do_not_instruct_running_dashboard_as_a_script():
     for name in ("README.md", "README.fr.md"):
         text = (_ROOT / name).read_text(encoding="utf-8")
         assert "python dashboard/app.py" not in text
+
+
+def test_readmes_annotate_registered_agents():
+    # server.py registers only 3 agents: opnsense, wireguard, crowdsec.
+    # pfSense is available in code but not registered; AnonyAgent runs
+    # in-process on the coordinator side. The READMEs must annotate this.
+    en = (_ROOT / "README.md").read_text(encoding="utf-8")
+    fr = (_ROOT / "README.fr.md").read_text(encoding="utf-8")
+    assert "registered: opnsense, wireguard, crowdsec" in en
+    assert "enregistrés : opnsense, wireguard, crowdsec" in fr

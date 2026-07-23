@@ -36,12 +36,18 @@ opérateur / UI
                        │  UDS optionnel (AGENT_SERVER_SOCK)
                        ▼
               serveur d'agents (server.py)
-       ┌───────────┬───────────┬───────────┬─────────┐
-       ▼           ▼           ▼           ▼         ▼
-   OPNsense    pfSense     WireGuard    CrowdSec    Anony
-   (firewall)  (firewall)   (VPN)        (IDPS)    (NER/PII)
-       │           │           │           │
-       ▼           ▼           ▼           ▼
+       ┌────────────────────────────────────────────┐
+       │ enregistrés : opnsense, wireguard, crowdsec│
+       ├───────────┬───────────┬───────────┐        │
+       │ ▼         ▼           ▼           ▼        │
+       │ OPNsense  WireGuard   CrowdSec            │
+       │ (firewall) (VPN)      (IDPS)              │
+       └───────────┴───────────┴───────────┘        │
+                                                     │
+       pfSense (disponible en code, non enregistré)  │
+       Anony (in-process côté coordinateur)         │
+       │           │           │
+       ▼           ▼           ▼
                 équipements
 ```
 
@@ -116,8 +122,11 @@ cyber-agent-engine/
 | CrowdSec | 15 (bans, décisions, alertes) | Qwen2.5-3B-Instruct + LoRA |
 | AnonyAgent | 5 (anonymisation NER) | spaCy fr_anonyner |
 
-Chaque agent expose ses capacités via `GET /capabilities` (format OpenAI function-calling).
-Le coordinateur découvre dynamiquement les fonctions disponibles au démarrage.
+Les trois **agents enregistrés** (OPNsense, WireGuard, CrowdSec) exposent leurs
+capacités via `GET /capabilities` (format OpenAI function-calling) servi par le
+serveur d'agents. Le coordinateur découvre dynamiquement les fonctions
+disponibles au démarrage. AnonyAgent exécute in-process côté coordinateur, non
+servi par le serveur d'agents.
 
 ---
 
