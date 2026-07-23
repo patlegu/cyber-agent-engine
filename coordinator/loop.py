@@ -99,7 +99,7 @@ class GatedLoop:
         """Reprend une boucle suspendue après décision humaine sur l'approbation."""
         session = self._sessions.get(approval_id, now=self._clock())
         if session is None:
-            return Failed(reason="session inconnue ou expirée")
+            return Failed(reason="unknown or expired session")
         approval = self._approvals.get(approval_id)
         if approval is None:
             return Failed(reason="approbation inconnue")
@@ -111,7 +111,7 @@ class GatedLoop:
             self._sink.write(entry_from_verdict(
                 verdict, event="resume_refuse", rule_reason=session.rule_reason
             ))
-            return Denied(reason=f"approbation en état {approval.state}")
+            return Denied(reason=f"approval in state {approval.state}")
         # Consommer l'approbation AVANT d'exécuter : anti-rejeu fail-closed. Une panne
         # transitoire de l'agent pendant `execute` ne doit jamais laisser une session
         # approuvée rejouable (un ban n'est pas idempotent, il ne doit jamais s'exécuter deux fois).
@@ -139,7 +139,7 @@ class GatedLoop:
         self._sessions.delete(approval_id)
         verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
         self._sink.write(entry_from_verdict(verdict, event="rejected", rule_reason=rule_reason))
-        return Denied(reason="rejeté par l'opérateur")
+        return Denied(reason="rejected by the operator")
 
     def _retokenize(self, result: dict[str, Any], vault: Vault) -> str:
         """Jetonise le résultat : d'abord les valeurs déjà connues du vault (déterministe,

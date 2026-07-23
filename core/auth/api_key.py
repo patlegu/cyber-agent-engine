@@ -23,7 +23,7 @@ def load_auth_secret(env: Mapping[str, str], var: str = "COORDINATOR_API_KEY") -
     secret = env.get(var, "")
     if not secret:
         raise AuthNotConfigured(
-            f"{var} absent ou vide : le coordinateur refuse de démarrer sans authentification"
+            f"{var} missing or empty: the coordinator refuses to start without authentication"
         )
     return secret
 
@@ -40,7 +40,7 @@ def make_auth_dependency(expected: str) -> Callable[[str | None], None]:
     def _require(x_api_key: str | None = Header(default=None)) -> None:
         if not verify(x_api_key, expected):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="clé API invalide ou absente"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid or missing API key"
             )
 
     return _require

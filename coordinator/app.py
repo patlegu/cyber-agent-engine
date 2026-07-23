@@ -45,7 +45,7 @@ def _serialize(result: LoopResult) -> dict[str, Any]:
         return {"status": "denied", "reason": result.reason}
     if isinstance(result, Failed):
         return {"status": "failed", "reason": result.reason}
-    raise TypeError(f"variante LoopResult non sérialisée : {type(result).__name__}")
+    raise TypeError(f"unserialized LoopResult variant: {type(result).__name__}")
 
 
 def _register_routes(app: FastAPI, auth_secret: str) -> None:

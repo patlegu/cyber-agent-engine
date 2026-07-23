@@ -26,7 +26,7 @@ class Authorized:
 
     def __init__(self, intention: Intention, _grant: object) -> None:
         if _grant is not _GRANT:
-            raise TypeError("Authorized ne peut être construit que par grant()/grant_approved()")
+            raise TypeError("Authorized can only be built by grant()/grant_approved()")
         self.intention = intention
 
 
@@ -43,5 +43,5 @@ def _grant_intention(intention: Intention) -> Authorized:
 
 def grant_approved(approval: Approval) -> Authorized:
     if approval.state != "approved":
-        raise NotAuthorized(f"approbation {approval.id} en état {approval.state}")
+        raise NotAuthorized(f"approval {approval.id} in state {approval.state}")
     return _grant_intention(approval.intention)
