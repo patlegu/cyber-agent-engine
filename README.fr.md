@@ -4,31 +4,54 @@
 
 Système multi-agents IA pour l'automatisation réseau et la sécurité.
 
-Un **coordinateur LLM** décompose les demandes en langage naturel et délègue l'exécution à des **agents-outils spécialisés** (OPNsense, WireGuard, CrowdSec), chacun piloté par un LoRA fine-tuné sur GPU local.
+Un **coordinateur LLM** décompose les demandes en langage naturel et délègue l'exécution à des **agents-outils spécialisés** (OPNsense, WireGuard, CrowdSec) via un socle de confiance (trust core) qui impose des décisions de politique fail-closed, une approbation humaine sur les actions irréversibles, et une tokenisation des PII avant que quoi que ce soit n'atteigne le LLM. Les agents interprètent optionnellement le langage naturel via un LoRA fine-tuné sur GPU local ; leur chemin d'exécution structuré ne requiert aucun modèle.
 
 ---
 
 ## Architecture
 
 ```
-Utilisateur / UI
-      │  langage naturel
+opérateur / UI
+      │  requête en langage naturel
       ▼
-┌─────────────────────────────────────┐
-│         coordinator/  (port 3001)   │
-│  PilotAgent : plan → CAP v1 → exec  │
-└────────────────┬────────────────────┘
-                 │  CAP v1 JSON (Unix socket)
-       ┌─────────┼──────────────┐
-       ▼         ▼              ▼
-   OPNsense   WireGuard     CrowdSec
-   (firewall)  (VPN)         (IDPS)
-       │
-       ▼
-   API équipement
+┌───────────────────────────────────────────────────┐
+│  coordinator/  (FastAPI, défaut 127.0.0.1:8080)    │
+│                                                     │
+│  Proposer (LLM) ──▶ core.decide()  (fail-closed)   │
+│                          │                         │
+│              ┌───────────┼────────────┐            │
+│              ▼           ▼            ▼            │
+│            deny       approve       allow          │
+│         (arrêt)      (porte             (exécute)  │
+│                       d'approbation —              │
+│                       checkpoint                   │
+│                       humain)                      │
+│                          │                         │
+│                          ▼                         │
+│              frontière core.execution              │
+│                                                     │
+│  Tokenisation PII : le LLM ne voit que des jetons   │
+└─────────────────────┬───────────────────────────────┘
+                       │  HTTP AGENT_SERVER_URL (défaut :3000)
+                       │  UDS optionnel (AGENT_SERVER_SOCK)
+                       ▼
+              serveur d'agents (server.py)
+       ┌───────────┬───────────┬───────────┬─────────┐
+       ▼           ▼           ▼           ▼         ▼
+   OPNsense    pfSense     WireGuard    CrowdSec    Anony
+   (firewall)  (firewall)   (VPN)        (IDPS)    (NER/PII)
+       │           │           │           │
+       ▼           ▼           ▼           ▼
+                équipements
 ```
 
-**CAP v1** (Coordinator-Agent Packet) : paquet JSON structuré transmis du coordinateur aux agents. Contient la directive, les entités extraites par AnonyNER, les arguments et le contexte.
+Le socle de confiance (`core/`) se situe entre le proposer LLM et toute
+exécution réelle : un moteur de politique fail-closed décide `deny` /
+`approve` / `allow` pour chaque intention proposée, une porte d'approbation
+suspend l'exécution pour les actions irréversibles jusqu'à ce qu'un humain la
+reprenne ou la rejette, et la frontière d'exécution est le seul chemin de code
+autorisé à appeler un agent. Le LLM ne voit jamais les secrets ou les PII en
+clair — il ne lit et n'écrit que des jetons du vault.
 
 ---
 
@@ -36,32 +59,50 @@ Utilisateur / UI
 
 ```
 cyber-agent-engine/
-├── server.py                  # Tool-agent-server HTTP (port 3000)
-├── coordinator/               # Coordinateur — planification et orchestration
-│   ├── pilot.py               # PilotAgent : boucle ReAct
-│   ├── judge.py               # CAPValidator : validation déterministe des CAP
-│   ├── state.py               # PlanState, Task, CheckpointStore
-│   ├── llm/                   # Client LLM multi-backend
-│   └── clients/               # Client vers les tool-agent-servers
-├── agents/                    # Agents-outils
-│   ├── base.py                # ToolAgent : classe de base
-│   ├── opnsense/              # Agent OPNsense — 102 fonctions (architecture mixin)
-│   ├── wireguard_agent.py     # Agent WireGuard — 11 fonctions
-│   ├── crowdsec_agent.py      # Agent CrowdSec — 15 fonctions
-│   └── anony/                 # Agent anonymisation (AnonyNER)
-├── clients/                   # Clients API bas-niveau
-└── dashboard/                 # UI temps réel (Svelte + FastAPI)
+├── server.py                  # Serveur d'agents HTTP (agents-outils), port 3000
+├── core/                       # Socle de confiance — le chemin sensible pour la sécurité
+│   ├── decision.py             # decide() : valider → évaluer → auditer → verdict
+│   ├── orchestrator.py         # Orchestration mono-action (partage decide() avec la boucle)
+│   ├── policy/                 # Moteur de politique fail-closed + catalogue de capacités
+│   ├── approval/                # Registre des approbations humaines
+│   ├── audit/                   # Log d'audit rotatif (par taille)
+│   ├── auth/                    # Auth par clé API (X-API-Key)
+│   ├── tokens/                  # Vault de tokenisation PII — le LLM ne voit que des jetons
+│   └── execution/                # Frontière d'exécution + autorisation
+├── coordinator/                 # Coordinateur — boucle ReAct gatée
+│   ├── app.py                   # App FastAPI : /coordinator/execute, /resume, /reject, /health
+│   ├── loop.py                  # GatedLoop : proposer → décider → suspendre|exécuter → re-tokeniser
+│   ├── proposer.py              # Proposer LLM — produit une intention, jamais auto-autorisante
+│   ├── agent_call.py            # Appel vers le serveur d'agents
+│   ├── assembly.py              # Câblage runtime (config → boucle assemblée)
+│   ├── catalog_builder.py       # Construit le catalogue de capacités depuis les serveurs d'agents
+│   ├── config.py                # Config env, fail-closed si secrets manquants
+│   ├── extractor.py             # Extraction d'entités alimentant la tokenisation
+│   ├── session.py                # Registre de sessions chiffré pour les exécutions suspendues
+│   └── llm/                      # Backend LLM du coordinateur (anthropic/openai/vllm/ollama)
+├── agents/                       # Agents-outils (exécution structurée + chemin NL LoRA optionnel)
+│   ├── base.py                   # ToolAgent : classe de base
+│   ├── infer_wiring.py           # Câble AGENT_INFER_*/AGENT_LORA_MODELS dans chaque agent
+│   ├── opnsense/                 # Agent OPNsense — 102 fonctions (architecture mixin)
+│   ├── wireguard_agent.py        # Agent WireGuard — 11 fonctions
+│   ├── crowdsec_agent.py         # Agent CrowdSec — 15 fonctions
+│   ├── pfsense_agent.py          # Agent pfSense
+│   └── anony/                    # Agent anonymisation (AnonyNER)
+├── clients/                      # Clients API bas-niveau
+├── dashboard/                    # Visualisation temps réel legacy (Svelte + FastAPI)
+└── tests/                        # Suite de tests
 ```
 
 ---
 
 ## Stack
 
-- **Inférence locale** : [vLLM](https://github.com/vllm-project/vllm) avec chargement multi-LoRA dynamique
+- **Raisonnement du coordinateur** : API Anthropic par défaut (`COORDINATOR_BACKEND=anthropic`) ; endpoint OpenAI-compatible ou vLLM/Ollama in-process en alternative
+- **Inférence locale des agents (optionnelle)** : [vLLM](https://github.com/vllm-project/vllm) avec chargement multi-LoRA dynamique
 - **Fine-tuning** : [Unsloth](https://github.com/unslothai/unsloth) + TRL/PEFT sur RTX 4070 Ti
-- **Modèles** : Qwen2.5-3B-Instruct (agents) + Qwen2.5-3B-Instruct (coordinateur)
+- **Modèle des agents** : Qwen2.5-3B-Instruct + LoRA (chemin langage naturel ; le chemin structuré ne requiert aucun modèle)
 - **Structured output** : Outlines/xgrammar via `StructuredOutputsParams` vLLM
-- **Dashboard** : Svelte + TypeScript + Tailwind, SSE temps réel
+- **Dashboard (legacy)** : Svelte + TypeScript + Tailwind, SSE temps réel
 - **NER sécurité** : spaCy custom (labels : IP, HOSTNAME, CVE, VPN_USER…)
 
 ---
@@ -85,17 +126,41 @@ Le coordinateur découvre dynamiquement les fonctions disponibles au démarrage.
 ```bash
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -e .            # runtime : coordinateur (API) + agents structurés, sans GPU
+pip install -e ".[dev]"     # + chaîne d'outils dev (pytest, ruff, mypy, build)
+pip install -e ".[gpu]"     # optionnel : loader LoRA/vLLM in-process (torch, vllm, unsloth)
 ```
+
+`requirements.txt` à la racine du dépôt appartient au workflow séparé de
+fine-tuning/entraînement des LoRA, pas à l'installation de ce produit — ne pas
+l'utiliser pour installer `cyber-agent-engine`.
 
 ## Configuration
 
 ```bash
 cp .env.example .env
-# Renseigner les variables OPNsense, CrowdSec, clés API
+# Renseigner les secrets du coordinateur, la clé du serveur d'agents et la clé du backend LLM
 ```
 
-Variables principales :
+`.env.example` couvre le côté **coordinateur** (variables principales
+ci-dessous) ; il ne définit ni les identifiants d'équipement OPNsense/CrowdSec
+ni `TOOL_AGENT_*` — ceux-ci sont lus directement dans l'environnement du
+processus par le serveur d'agents (`server.py`).
+
+```bash
+# Auth du coordinateur (côté opérateur) et chiffrement de session
+COORDINATOR_API_KEY=<clé>
+COORDINATOR_SESSION_KEY=<clé-forte-aléatoire>   # clé Fernet base64
+
+# Auth partagée serveur d'agents (coordinateur -> serveur d'agents)
+AGENT_API_KEY=<clé-forte-aléatoire>
+
+# Backend LLM de raisonnement du coordinateur
+COORDINATOR_BACKEND=anthropic
+ANTHROPIC_API_KEY=<clé>
+```
+
+Variables lues par le serveur d'agents (`server.py`), à définir séparément de `.env.example` :
 
 ```bash
 # OPNsense
@@ -107,12 +172,9 @@ OPNSENSE_API_SECRET=<secret>
 CROWDSEC_URL=http://localhost:8080/v1
 CROWDSEC_API_KEY=<bouncer-key>
 
-# Modèle de base des agents (LoRA partagé)
-TOOL_AGENT_BASE_MODEL=Qwen/Qwen2.5-3B-Instruct
-TOOL_AGENT_GPU_UTIL=0.45
-
-# Auth agent-to-agent (omis = mode dev)
-AGENT_API_KEY=<clé-forte-aléatoire>
+# Modèle de base des agents pour le chemin NL LoRA optionnel (défauts code affichés)
+TOOL_AGENT_BASE_MODEL=microsoft/Phi-3.5-mini-instruct
+TOOL_AGENT_GPU_UTIL=0.40
 ```
 
 ## Déploiement & backends
@@ -154,11 +216,12 @@ L'agent reçoit ce backend via les paramètres injectés au niveau du constructe
 - `openai_client` : client HTTP OpenAI-compatible (`OpenAICompatClient`)
 - `lora_model` : nom du LoRA à utiliser
 
-**Note :** Le câblage automatique depuis des variables d'environnement
-(`AGENT_INFER_BASE_URL`, `AGENT_INFER_API_KEY`, `AGENT_LORA_MODELS`) est
-prévu au niveau de l'assemblage runtime (sous-projet D) et n'est pas encore
-actif dans ce paquet. Ces noms de variables restent découvrables pour la
-documentation, mais ne sont pas lus par le code de ce module.
+**Câblage :** `agents/infer_wiring.py` lit `AGENT_INFER_BASE_URL` /
+`AGENT_INFER_API_KEY` / `AGENT_LORA_MODELS` dans l'environnement au démarrage
+du serveur d'agents (`server.py`) et injecte `openai_client`/`lora_model` dans
+chaque `ToolAgent`. Une surcharge par agent, `<AGENT>_LORA_MODEL` (ex.
+`OPNSENSE_LORA_MODEL`), prime sur la map globale `AGENT_LORA_MODELS` pour cet
+agent.
 
 Sans backend d'inférence configuré, le chemin NL renvoie une erreur explicite
 (`NoInferenceBackend`) ; le chemin structuré reste toujours disponible.
@@ -175,13 +238,20 @@ python server.py
 
 Lance le serveur d'agents sur le port 3000. Le coordinateur y accède via `AGENT_SERVER_URL`.
 
-### Dashboard
+### Dashboard (visualisation legacy)
 
 ```bash
-python dashboard/app.py
+uvicorn dashboard.app:app --port 8090
 ```
 
-Lance l'interface temps réel sur le port 8080 (visualisation et approbation des checkpoints).
+Le dashboard est une visualisation temps réel legacy, distincte de l'API du
+coordinateur adossée à `core` ci-dessous. Ses routes d'approbation de
+checkpoint (`POST /coordinator/checkpoint/{run_id}/approve` et `/reject`)
+relaient vers un `COORDINATOR_URL` par défaut `http://localhost:3001` — l'API
+coordinateur legacy, pas l'actuel `coordinator/app.py` (défaut `:8080`, voir
+[API coordinateur](#api-coordinateur) ci-dessous). Lancer le dashboard sur un
+port autre que 8080/3000/3001 pour éviter toute collision avec le
+coordinateur et le serveur d'agents.
 
 ### Lancer le coordinateur
 
@@ -201,15 +271,63 @@ de départ. `GET /coordinator/health` sert la readiness (sans auth).
 
 ## API
 
-### `GET /capabilities`
+### API coordinateur
 
-Découverte dynamique des fonctions disponibles.
+Auth via `X-API-Key: <COORDINATOR_API_KEY>`, sauf `/coordinator/health`.
+
+#### `POST /coordinator/execute`
+
+Exécute une requête en langage naturel via la boucle gatée (proposer →
+décider → suspendre ou exécuter). Corps : `{"request": "<texte>"}`. La
+réponse est l'une de : `{"status": "completed", "summary": ..., "results": [...]}`,
+`{"status": "pending_approval", "approval_id": "..."}`,
+`{"status": "denied", "reason": "..."}`, ou
+`{"status": "failed", "reason": "..."}`.
+
+```bash
+curl -X POST http://localhost:8080/coordinator/execute \
+  -H "X-API-Key: <key>" \
+  -H "Content-Type: application/json" \
+  -d '{"request": "ban IP 1.2.3.4 pour 24h"}'
+```
+
+#### `POST /coordinator/resume/{approval_id}`
+
+Reprend une exécution suspendue après qu'un humain a approuvé l'action en attente.
+
+```bash
+curl -X POST http://localhost:8080/coordinator/resume/<approval_id> \
+  -H "X-API-Key: <key>"
+```
+
+#### `POST /coordinator/reject/{approval_id}`
+
+Rejette une approbation en attente ; l'exécution se termine `denied`, rien n'est exécuté.
+
+```bash
+curl -X POST http://localhost:8080/coordinator/reject/<approval_id> \
+  -H "X-API-Key: <key>"
+```
+
+#### `GET /coordinator/health`
+
+Sonde de disponibilité, sans auth : `{"status": "ok"}`.
+
+### API du serveur d'agents
+
+#### `GET /capabilities`
+
+Découverte dynamique des fonctions disponibles. Nécessite `X-API-Key`. La
+réponse porte aussi `server_version` et, par agent, `tool_name` en plus de
+`name`/`inference`/`function_count`/`functions`.
 
 ```json
 {
+  "server_version": "2.2",
   "agents": [
     {
       "name": "opnsense",
+      "tool_name": "opnsense",
       "inference": "vllm",
       "function_count": 102,
       "functions": [
@@ -224,7 +342,7 @@ Découverte dynamique des fonctions disponibles.
 }
 ```
 
-### `POST /agent/execute`
+#### `POST /agent/execute`
 
 Exécute une commande en langage naturel.
 
@@ -273,7 +391,14 @@ Un seul moteur vLLM charge le modèle de base une fois et swap les adapters LoRA
 
 ### Checkpoint humain
 
-Avant toute action irréversible, le coordinateur suspend l'exécution et attend une approbation explicite via le dashboard ou l'API. Timeout configurable (`CHECKPOINT_TIMEOUT`, défaut 300s).
+Avant toute action irréversible, `core.decide` renvoie `approve` : le
+coordinateur suspend l'exécution et la persiste comme approbation en attente.
+Un humain la reprend avec `POST /coordinator/resume/{approval_id}` (exécute)
+ou la termine avec `POST /coordinator/reject/{approval_id}` (refuse, rien ne
+s'exécute) — voir [API coordinateur](#api-coordinateur). Le dashboard legacy
+offre les deux mêmes actions via son relais `:3001`. La durée de vie d'une
+session suspendue est fixe à 300s (`session_ttl` dans `coordinator/loop.py`),
+non configurable à ce jour via une variable d'environnement.
 
 ---
 
@@ -289,7 +414,9 @@ Adapters LoRA fine-tunés sur **Qwen2.5-3B-Instruct**, entraînés avec Unsloth 
 
 Les 3 adapters partagent la même base — ils sont chargés simultanément par vLLM en **multi-LoRA dynamique** (swap à la volée sans recharger le backbone).
 
-La vérification fonctionnelle est réalisée par injection de paquets CAP v1 (format production) via les scripts `verify_*_qwen25.py`.
+La vérification fonctionnelle exerce de bout en bout chaque fonction exposée
+par le catalogue `GET /capabilities` de l'agent, contre l'API réelle de
+l'équipement.
 
 ---
 
