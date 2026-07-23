@@ -102,7 +102,7 @@ class GatedLoop:
             return Failed(reason="unknown or expired session")
         approval = self._approvals.get(approval_id)
         if approval is None:
-            return Failed(reason="approbation inconnue")
+            return Failed(reason="unknown approval")
         verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
         vault = Vault.restore(session.vault_snapshot)
         try:
@@ -132,7 +132,7 @@ class GatedLoop:
         """Rejette une approbation en attente : purge la session, aucune exécution."""
         approval = self._approvals.get(approval_id)
         if approval is None:
-            return Failed(reason="approbation inconnue")
+            return Failed(reason="unknown approval")
         session = self._sessions.get(approval_id, now=self._clock())
         rule_reason = session.rule_reason if session is not None else None
         self._approvals.reject(approval_id)
@@ -177,7 +177,7 @@ class GatedLoop:
                 intention, catalog=self._catalog, policy=self._policy, sink=self._sink
             )
             if verdict.effect == "deny":
-                return Denied(reason=f"politique: {intention.capability}")
+                return Denied(reason=f"policy: {intention.capability}")
             if verdict.effect == "approve":
                 sid = self._new_id()
                 self._approvals.create(intention, approval_id=sid)
@@ -196,4 +196,4 @@ class GatedLoop:
             results.append(result)
             history = [*history, self._retokenize(result, vault)]
             step += 1
-        return Failed(reason="nombre de pas maximal atteint")
+        return Failed(reason="maximum step count reached")

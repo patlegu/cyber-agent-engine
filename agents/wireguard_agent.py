@@ -132,7 +132,7 @@ class WireGuardAgent(ToolAgent):
         # Initialiser le client approprié
         if platform == "opnsense":
             if not self.api_config and not self.simulation_mode:
-                raise ValueError("Configuration requise pour OPNsense")
+                raise ValueError("Configuration required for OPNsense")
             
             if self.api_config:
                 self.client = WireGuardAPIClient(

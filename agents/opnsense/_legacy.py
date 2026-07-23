@@ -19,7 +19,7 @@ class LegacyMixin:
         if not target_ip:
             return {"status": "error", "message": "Missing 'ip' or 'address' parameter"}
 
-        logger.info(f"[OPNsense] Blocage IP: {target_ip}")
+        logger.info(f"[OPNsense] Blocking IP: {target_ip}")
 
         if self._api_client:
             if self.platform == "linux":
@@ -53,7 +53,7 @@ class LegacyMixin:
 
                 return result
             except Exception as e:
-                logger.error(f"Erreur fatale blocage IP: {e}")
+                logger.error(f"Fatal IP block error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "success", "ip": target_ip, "mode": "simulation"}

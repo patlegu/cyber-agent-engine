@@ -26,18 +26,18 @@ class DiagnosticsMixin:
         try:
             return {"system": {"platform": "opnsense", "status": "Healthy"}}
         except Exception as e:
-            logger.error(f"Erreur status OPNsense: {e}")
+            logger.error(f"OPNsense status error: {e}")
             return {"status": "error", "message": str(e)}
 
     async def _get_firewall_log(self, limit: int = 100, **kwargs) -> Dict:
         """Récupère les logs du firewall."""
-        logger.info(f"[OPNsense] Consultation logs (limit: {limit})")
+        logger.info(f"[OPNsense] Fetching logs (limit: {limit})")
 
         if self._api_client:
             try:
                 return await self._api_client.get_firewall_log(limit=limit, **kwargs)
             except Exception as e:
-                logger.error(f"Erreur consultation logs: {e}")
+                logger.error(f"Log fetch error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {
@@ -94,13 +94,13 @@ class DiagnosticsMixin:
 
     async def _get_firewall_statistics(self) -> Dict:
         """Récupère les statistiques globales."""
-        logger.info("[OPNsense] Consultation statistiques")
+        logger.info("[OPNsense] Fetching statistics")
 
         if self._api_client:
             try:
                 return await self._api_client.get_firewall_statistics()
             except Exception as e:
-                logger.error(f"Erreur consultation stats: {e}")
+                logger.error(f"Stats fetch error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"packets": 1234567, "bytes": 9876543210, "mode": "simulation"}

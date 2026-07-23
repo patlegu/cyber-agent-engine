@@ -41,7 +41,7 @@ class NATMixin:
     @safety_snapshot
     async def _delete_nat_outbound(self, uuid: str) -> Dict:
         """Supprime une règle NAT sortant."""
-        logger.info(f"[OPNsense] Suppression NAT sortant: {uuid}")
+        logger.info(f"[OPNsense] Removing outbound NAT: {uuid}")
 
         if self._api_client:
             try:
@@ -51,7 +51,7 @@ class NATMixin:
                     logger.info(f"✓ Outbound NAT {uuid} removed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression NAT sortant: {e}")
+                logger.error(f"Outbound NAT removal error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
@@ -121,7 +121,7 @@ class NATMixin:
     @safety_snapshot
     async def _delete_nat_one_to_one(self, uuid: str) -> Dict:
         """Supprime un NAT 1:1."""
-        logger.info(f"[OPNsense] Suppression NAT 1:1: {uuid}")
+        logger.info(f"[OPNsense] Removing NAT 1:1: {uuid}")
 
         if self._api_client:
             try:
@@ -131,7 +131,7 @@ class NATMixin:
                     logger.info(f"✓ NAT 1:1 {uuid} removed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression NAT 1:1: {e}")
+                logger.error(f"NAT 1:1 removal error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}

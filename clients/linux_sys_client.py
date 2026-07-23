@@ -50,7 +50,7 @@ class LinuxSysClient:
                 }
             }
         except Exception as e:
-            logger.error(f"Erreur health Linux: {e}")
+            logger.error(f"Linux health error: {e}")
             return {"status": "error", "message": str(e)}
 
     async def crowdsec_block(self, ip: str, reason: str = "Blocked by Agent") -> Dict:
@@ -60,7 +60,7 @@ class LinuxSysClient:
             await self._run_command(cmd)
             return {"status": "success", "ip": ip, "action": "blocked", "provider": "crowdsec"}
         except Exception as e:
-            logger.error(f"Erreur CrowdSec: {e}")
+            logger.error(f"CrowdSec error: {e}")
             return {"status": "error", "message": str(e)}
 
     async def crowdsec_unblock(self, ip: str) -> Dict:
@@ -70,5 +70,5 @@ class LinuxSysClient:
             await self._run_command(cmd)
             return {"status": "success", "ip": ip, "action": "unblocked", "provider": "crowdsec"}
         except Exception as e:
-            logger.error(f"Erreur CrowdSec delete: {e}")
+            logger.error(f"CrowdSec delete error: {e}")
             return {"status": "error", "message": str(e)}

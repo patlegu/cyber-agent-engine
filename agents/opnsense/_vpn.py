@@ -25,12 +25,12 @@ class VPNMixin:
 
         Indique si le daemon IPsec est actif et combien de tunnels sont établis.
         """
-        logger.info("[OPNsense] Statut IPsec")
+        logger.info("[OPNsense] IPsec status")
         if self._api_client:
             try:
                 return await self._api_client.get_ipsec_status()
             except Exception as e:
-                logger.error(f"Erreur statut IPsec: {e}")
+                logger.error(f"IPsec status error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "unknown", "mode": "simulation"}
 
@@ -39,12 +39,12 @@ class VPNMixin:
 
         Retourne les connexions avec leur UUID, nom et état d'activation.
         """
-        logger.info("[OPNsense] Liste des connexions IPsec")
+        logger.info("[OPNsense] Listing IPsec connections")
         if self._api_client:
             try:
                 return await self._api_client.list_ipsec_connections()
             except Exception as e:
-                logger.error(f"Erreur liste connexions IPsec: {e}")
+                logger.error(f"IPsec connection list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"connections": [], "mode": "simulation"}
 
@@ -62,7 +62,7 @@ class VPNMixin:
                 await self._api_client.apply_ipsec_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur toggle IPsec: {e}")
+                logger.error(f"IPsec toggle error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "toggled", "uuid": uuid, "enabled": enabled, "mode": "simulation"}
 
@@ -71,12 +71,12 @@ class VPNMixin:
 
         Retourne les sessions actives avec IPs locales/distantes et état.
         """
-        logger.info("[OPNsense] Sessions IPsec actives")
+        logger.info("[OPNsense] Active IPsec sessions")
         if self._api_client:
             try:
                 return await self._api_client.list_ipsec_sessions()
             except Exception as e:
-                logger.error(f"Erreur liste sessions IPsec: {e}")
+                logger.error(f"IPsec session list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"sessions": [], "mode": "simulation"}
 
@@ -85,12 +85,12 @@ class VPNMixin:
 
         :param session_id: Identifiant de la session IPsec à initier.
         """
-        logger.info(f"[OPNsense] Connexion session IPsec: {session_id}")
+        logger.info(f"[OPNsense] Connecting IPsec session: {session_id}")
         if self._api_client:
             try:
                 return await self._api_client.connect_ipsec_session(session_id)
             except Exception as e:
-                logger.error(f"Erreur connexion session IPsec: {e}")
+                logger.error(f"IPsec session connection error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "connecting", "session_id": session_id, "mode": "simulation"}
 
@@ -100,12 +100,12 @@ class VPNMixin:
 
         :param session_id: Identifiant de la session IPsec à déconnecter.
         """
-        logger.info(f"[OPNsense] Déconnexion session IPsec: {session_id}")
+        logger.info(f"[OPNsense] Disconnecting IPsec session: {session_id}")
         if self._api_client:
             try:
                 return await self._api_client.disconnect_ipsec_session(session_id)
             except Exception as e:
-                logger.error(f"Erreur déconnexion session IPsec: {e}")
+                logger.error(f"IPsec session disconnection error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "disconnected", "session_id": session_id, "mode": "simulation"}
 
@@ -118,12 +118,12 @@ class VPNMixin:
 
         Retourne les instances avec leur UUID, description et état d'activation.
         """
-        logger.info("[OPNsense] Liste des instances OpenVPN")
+        logger.info("[OPNsense] Listing OpenVPN instances")
         if self._api_client:
             try:
                 return await self._api_client.list_openvpn_instances()
             except Exception as e:
-                logger.error(f"Erreur liste instances OpenVPN: {e}")
+                logger.error(f"OpenVPN instance list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"instances": [], "mode": "simulation"}
 
@@ -141,7 +141,7 @@ class VPNMixin:
                 await self._api_client.apply_openvpn_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur toggle OpenVPN: {e}")
+                logger.error(f"OpenVPN toggle error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "toggled", "uuid": uuid, "enabled": enabled, "mode": "simulation"}
 
@@ -150,12 +150,12 @@ class VPNMixin:
 
         Retourne les clients avec leur CN, adresse IP réelle et IP VPN attribuée.
         """
-        logger.info("[OPNsense] Sessions OpenVPN actives")
+        logger.info("[OPNsense] Active OpenVPN sessions")
         if self._api_client:
             try:
                 return await self._api_client.list_openvpn_sessions()
             except Exception as e:
-                logger.error(f"Erreur liste sessions OpenVPN: {e}")
+                logger.error(f"OpenVPN session list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"sessions": [], "mode": "simulation"}
 
@@ -166,11 +166,11 @@ class VPNMixin:
         :param common_name: Common Name du certificat client OpenVPN (ex: 'user@domain').
         :param address: Adresse IP réelle du client à déconnecter.
         """
-        logger.info(f"[OPNsense] Kill session OpenVPN: {common_name} @ {address}")
+        logger.info(f"[OPNsense] Kill OpenVPN session: {common_name} @ {address}")
         if self._api_client:
             try:
                 return await self._api_client.kill_openvpn_session(common_name, address)
             except Exception as e:
-                logger.error(f"Erreur kill session OpenVPN: {e}")
+                logger.error(f"OpenVPN session kill error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "killed", "common_name": common_name, "mode": "simulation"}

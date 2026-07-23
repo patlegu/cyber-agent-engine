@@ -112,12 +112,12 @@ class IDSMixin:
 
         Retourne les rulesets installés (Emerging Threats, etc.) et leur statut.
         """
-        logger.info("[OPNsense] Liste des rulesets IDS")
+        logger.info("[OPNsense] Listing IDS rulesets")
         if self._api_client:
             try:
                 return await self._api_client.list_ids_rulesets()
             except Exception as e:
-                logger.error(f"Erreur liste rulesets IDS: {e}")
+                logger.error(f"IDS ruleset list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"rulesets": [], "mode": "simulation"}
 
@@ -134,7 +134,7 @@ class IDSMixin:
                 await self._api_client.reload_ids_rules()
                 return response
             except Exception as e:
-                logger.error(f"Erreur toggle ruleset IDS: {e}")
+                logger.error(f"IDS ruleset toggle error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "toggled", "filename": filename, "enabled": enabled, "mode": "simulation"}
 

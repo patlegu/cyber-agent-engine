@@ -85,26 +85,26 @@ class ExtendedMixin:
 
     async def _list_geoip_countries(self) -> Dict:
         """Liste tous les pays disponibles pour GeoIP."""
-        logger.info("[OPNsense] Liste pays GeoIP")
+        logger.info("[OPNsense] Listing GeoIP countries")
 
         if self._api_client:
             try:
                 return await self._api_client.list_geoip_countries()
             except Exception as e:
-                logger.error(f"Erreur liste pays GeoIP: {e}")
+                logger.error(f"GeoIP country list error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"countries": ["FR", "US", "DE", "GB", "CN", "RU"], "mode": "simulation"}
 
     async def _get_geoip_database(self) -> Dict:
         """Récupère les informations sur la base GeoIP."""
-        logger.info("[OPNsense] Info base GeoIP")
+        logger.info("[OPNsense] GeoIP database info")
 
         if self._api_client:
             try:
                 return await self._api_client.get_geoip_database()
             except Exception as e:
-                logger.error(f"Erreur info base GeoIP: {e}")
+                logger.error(f"GeoIP database info error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"version": "2024.01", "last_update": "2024-01-15", "mode": "simulation"}
@@ -133,13 +133,13 @@ class ExtendedMixin:
 
     async def _get_upgrade_status(self) -> Dict:
         """Récupère le statut d'une mise à jour en cours."""
-        logger.info("[OPNsense] Statut upgrade")
+        logger.info("[OPNsense] Upgrade status")
 
         if self._api_client:
             try:
                 return await self._api_client.get_upgrade_status()
             except Exception as e:
-                logger.error(f"Erreur statut upgrade: {e}")
+                logger.error(f"Upgrade status error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "done", "log": ["Upgrade finished successfully"], "mode": "simulation"}
@@ -147,7 +147,7 @@ class ExtendedMixin:
     @safety_snapshot
     async def _upgrade_firmware(self, upgrade_type: str = "pkg") -> Dict:
         """Lance une mise à jour du système. ATTENTION: peut redémarrer le firewall."""
-        logger.info(f"[OPNsense] Lancement upgrade ({upgrade_type})")
+        logger.info(f"[OPNsense] Launching upgrade ({upgrade_type})")
 
         if self._api_client:
             try:
@@ -155,7 +155,7 @@ class ExtendedMixin:
                 logger.warning("⚠ Upgrade launched. The system may reboot.")
                 return response
             except Exception as e:
-                logger.error(f"Erreur lancement upgrade: {e}")
+                logger.error(f"Upgrade launch error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "running", "upgrade_type": upgrade_type, "mode": "simulation"}
@@ -165,7 +165,7 @@ class ExtendedMixin:
     @safety_snapshot
     async def _add_dns_override(self, hostname: str, domain: str, ip: str, description: str = "") -> Dict:
         """Ajoute un DNS Host Override (enregistrement A) dans Unbound."""
-        logger.info(f"[OPNsense] Ajout DNS Override: {hostname}.{domain} -> {ip}")
+        logger.info(f"[OPNsense] Adding DNS Override: {hostname}.{domain} -> {ip}")
 
         if self._api_client:
             try:
@@ -189,7 +189,7 @@ class ExtendedMixin:
 
     async def _delete_dns_override(self, hostname: str, domain: str) -> Dict:
         """Supprime un DNS Host Override Unbound."""
-        logger.info(f"[OPNsense] Suppression DNS Override: {hostname}.{domain}")
+        logger.info(f"[OPNsense] Removing DNS Override: {hostname}.{domain}")
 
         if self._api_client:
             try:
@@ -214,7 +214,7 @@ class ExtendedMixin:
     @safety_snapshot
     async def _manage_dns_blocklist(self, enabled: int = 1, force_download: bool = False) -> Dict:
         """Active ou désactive la liste de blocage DNS Unbound (DNSBL)."""
-        logger.info(f"[OPNsense] Gestion Blocklist DNS Unbound (enabled={enabled})")
+        logger.info(f"[OPNsense] Managing Unbound DNS Blocklist (enabled={enabled})")
         
         if self._api_client:
             try:
@@ -249,7 +249,7 @@ class ExtendedMixin:
     @safety_snapshot
     async def _add_static_mapping(self, mac: str, ip: str, hostname: str, description: str = "") -> Dict:
         """Ajoute une réservation DHCP statique."""
-        logger.info(f"[OPNsense] Ajout DHCP Static: {mac} -> {ip} ({hostname})")
+        logger.info(f"[OPNsense] Adding DHCP Static: {mac} -> {ip} ({hostname})")
 
         if self._api_client:
             try:
@@ -268,12 +268,12 @@ class ExtendedMixin:
 
         Vérifie si le plugin ACME est installé et en cours d'exécution.
         """
-        logger.info("[OPNsense] Statut ACME client")
+        logger.info("[OPNsense] ACME client status")
         if self._api_client:
             try:
                 return await self._api_client.get_acme_status()
             except Exception as e:
-                logger.error(f"Erreur statut ACME: {e}")
+                logger.error(f"ACME status error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "unknown", "mode": "simulation"}
 
@@ -282,12 +282,12 @@ class ExtendedMixin:
 
         Retourne les certificats, leurs domaines et dates d'expiration.
         """
-        logger.info("[OPNsense] Liste des certificats ACME")
+        logger.info("[OPNsense] Listing ACME certificates")
         if self._api_client:
             try:
                 return await self._api_client.list_acme_certificates()
             except Exception as e:
-                logger.error(f"Erreur liste certificats ACME: {e}")
+                logger.error(f"ACME certificate list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"certificates": [], "mode": "simulation"}
 
@@ -296,12 +296,12 @@ class ExtendedMixin:
 
         :param uuid: UUID du certificat ACME à signer/renouveler.
         """
-        logger.info(f"[OPNsense] Signature certificat ACME: {uuid}")
+        logger.info(f"[OPNsense] Signing ACME certificate: {uuid}")
         if self._api_client:
             try:
                 return await self._api_client.sign_acme_certificate(uuid)
             except Exception as e:
-                logger.error(f"Erreur signature certificat ACME: {e}")
+                logger.error(f"ACME certificate signing error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "signed", "uuid": uuid, "mode": "simulation"}
 
@@ -338,11 +338,11 @@ class ExtendedMixin:
 
         Chaque compte correspond à une adresse email d'enregistrement ACME.
         """
-        logger.info("[OPNsense] Liste des comptes ACME")
+        logger.info("[OPNsense] Listing ACME accounts")
         if self._api_client:
             try:
                 return await self._api_client.list_acme_accounts()
             except Exception as e:
-                logger.error(f"Erreur liste comptes ACME: {e}")
+                logger.error(f"ACME account list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"accounts": [], "mode": "simulation"}

@@ -277,7 +277,7 @@ class ToolAgent(ABC):
                     function=function_call.function,
                     args=function_call.args,
                     result=None,
-                    error=f"Fonction inconnue: {function_call.function}",
+                    error=f"Unknown function: {function_call.function}",
                     error_code=ErrorCode.FUNCTION_UNKNOWN,
                     tool_name=self.tool_name,
                     execution_time_ms=(time.time() - start_time) * 1000
@@ -435,7 +435,7 @@ class ToolAgent(ABC):
             return await self._call_function(function_call, start_time)
         except Exception as e:
             import time as _t
-            logger.error(f"Erreur execute_direct({function}): {e}")
+            logger.error(f"execute_direct error ({function}): {e}")
             return ToolResult(
                 success=False,
                 function=function,
@@ -944,7 +944,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                                     )
                                 # None in cache means previously unresolved → skip fuzzy
                             else:
-                                logger.warning(f"Fonction inconnue: {func_name}, tentative de fuzzy matching...")
+                                logger.warning(f"Unknown function: {func_name}, attempting fuzzy matching...")
 
                                 # Case-insensitive exact match check first
                                 for valid_name in self._functions.keys():
@@ -1001,7 +1001,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                                     # Cache miss, unresolvable
                                     self._function_resolution_cache[cache_key] = None
         except Exception as e:
-            logger.warning(f"Erreur lors du parsing tool call: {e}")
+            logger.warning(f"Error parsing tool call: {e}")
         
         # 4. Fallback: Simulation si échec du parsing
         logger.warning(f"No valid function identified in the model response")
@@ -1047,7 +1047,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                     
                     # Si pas de paramètres obligatoires, utiliser cette fonction
                     if required_params == 0:
-                        logger.info(f"Simulation: utilisation de {func_name} (lecture sans arguments)")
+                        logger.info(f"Simulation: using {func_name} (read without arguments)")
                         return FunctionCall(
                             function=func_name,
                             args={},

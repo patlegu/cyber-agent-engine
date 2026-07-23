@@ -69,7 +69,7 @@ class PfSenseAgent(OPNsenseAgent):
             )
             logger.info("✓ pfSense API client initialized")
         else:
-            logger.warning("⚠️  Mode simulation : pas de configuration API fournie")
+            logger.warning("⚠️  Simulation mode: no API configuration provided")
 
     # ========================================================================
     # Méthodes héritées d'OPNsense
@@ -163,13 +163,13 @@ class PfSenseAgent(OPNsenseAgent):
         
         MÉTHODE SPÉCIFIQUE pfSense.
         """
-        logger.info(f"[pfSense] Liste des packages")
+        logger.info(f"[pfSense] Listing packages")
         
         if self._api_client:
             try:
                 return await self._api_client.get_packages()
             except Exception as e:
-                logger.error(f"Erreur liste packages: {e}")
+                logger.error(f"Package list error: {e}")
                 return {"status": "error", "message": str(e)}
         
         return {"packages": [], "mode": "simulation"}
@@ -183,7 +183,7 @@ class PfSenseAgent(OPNsenseAgent):
         Args:
             package_name: Nom du package à installer
         """
-        logger.info(f"[pfSense] Installation package: {package_name}")
+        logger.info(f"[pfSense] Installing package: {package_name}")
         
         if self._api_client:
             try:
@@ -191,7 +191,7 @@ class PfSenseAgent(OPNsenseAgent):
                 logger.info(f"✓ Package {package_name} installed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur installation package: {e}")
+                logger.error(f"Package installation error: {e}")
                 return {"status": "error", "message": str(e)}
         
         return {

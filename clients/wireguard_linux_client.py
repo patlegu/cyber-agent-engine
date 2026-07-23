@@ -52,7 +52,7 @@ class WireGuardLinuxClient:
         stderr_str = stderr.decode().strip()
         
         if check and proc.returncode != 0:
-            logger.error(f"Erreur commande {' '.join(cmd)}: {stderr_str}")
+            logger.error(f"Command error {' '.join(cmd)}: {stderr_str}")
             raise RuntimeError(f"Command failed ({proc.returncode}): {stderr_str}")
             
         return {
@@ -215,7 +215,7 @@ PrivateKey = {private_key}
         """Ajoute un peer à une interface WireGuard."""
         config_file = self.config_dir / f"{interface}.conf"
         if not config_file.exists():
-            raise FileNotFoundError(f"Interface {interface} n'existe pas")
+            raise FileNotFoundError(f"Interface {interface} does not exist")
 
         config = config_file.read_text()
         
@@ -242,7 +242,7 @@ PrivateKey = {private_key}
             logger.info(f"Peer {public_key[:16]}... removed from {interface}")
             return True
         except Exception as e:
-            logger.error(f"Erreur suppression peer: {e}")
+            logger.error(f"Peer removal error: {e}")
             return False
 
     # ========================================================================

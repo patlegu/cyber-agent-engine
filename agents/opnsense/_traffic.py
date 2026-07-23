@@ -21,12 +21,12 @@ class TrafficShaperMixin:
 
         Utile pour monitorer l'utilisation des limitations de débit configurées.
         """
-        logger.info("[OPNsense] Statistiques traffic shaping")
+        logger.info("[OPNsense] Traffic shaping statistics")
         if self._api_client:
             try:
                 return await self._api_client.get_traffic_statistics()
             except Exception as e:
-                logger.error(f"Erreur stats trafic: {e}")
+                logger.error(f"Traffic stats error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"pipes": [], "queues": [], "mode": "simulation"}
 
@@ -35,12 +35,12 @@ class TrafficShaperMixin:
 
         Un pipe définit une limite de débit maximale (ex: 10 Mbit/s).
         """
-        logger.info("[OPNsense] Liste des pipes traffic shaping")
+        logger.info("[OPNsense] Listing traffic shaping pipes")
         if self._api_client:
             try:
                 return await self._api_client.list_traffic_pipes()
             except Exception as e:
-                logger.error(f"Erreur liste pipes: {e}")
+                logger.error(f"Pipe list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"pipes": [], "mode": "simulation"}
 
@@ -80,14 +80,14 @@ class TrafficShaperMixin:
 
         :param uuid: UUID du pipe à supprimer.
         """
-        logger.info(f"[OPNsense] Suppression pipe: {uuid}")
+        logger.info(f"[OPNsense] Removing pipe: {uuid}")
         if self._api_client:
             try:
                 response = await self._api_client.del_traffic_pipe(uuid)
                 await self._api_client.apply_traffic_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression pipe: {e}")
+                logger.error(f"Pipe removal error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
 
@@ -96,12 +96,12 @@ class TrafficShaperMixin:
 
         Une queue appartient à un pipe et définit une priorité relative.
         """
-        logger.info("[OPNsense] Liste des queues traffic shaping")
+        logger.info("[OPNsense] Listing traffic shaping queues")
         if self._api_client:
             try:
                 return await self._api_client.list_traffic_queues()
             except Exception as e:
-                logger.error(f"Erreur liste queues: {e}")
+                logger.error(f"Queue list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"queues": [], "mode": "simulation"}
 
@@ -141,14 +141,14 @@ class TrafficShaperMixin:
 
         :param uuid: UUID de la queue à supprimer.
         """
-        logger.info(f"[OPNsense] Suppression queue: {uuid}")
+        logger.info(f"[OPNsense] Removing queue: {uuid}")
         if self._api_client:
             try:
                 response = await self._api_client.del_traffic_queue(uuid)
                 await self._api_client.apply_traffic_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression queue: {e}")
+                logger.error(f"Queue removal error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
 
@@ -221,11 +221,11 @@ class TrafficShaperMixin:
 
     async def _apply_traffic_changes(self) -> Dict:
         """Applique et active toutes les modifications de traffic shaping en attente."""
-        logger.info("[OPNsense] Application traffic shaping")
+        logger.info("[OPNsense] Applying traffic shaping")
         if self._api_client:
             try:
                 return await self._api_client.apply_traffic_changes()
             except Exception as e:
-                logger.error(f"Erreur application traffic: {e}")
+                logger.error(f"Traffic apply error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "applied", "mode": "simulation"}

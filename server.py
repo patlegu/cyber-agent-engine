@@ -117,7 +117,7 @@ def _discover_lora_adapters(loras_dir: Path, base_model: str) -> Dict[str, str]:
         try:
             cfg = _json.loads(config_path.read_text())
         except Exception as e:
-            logger.warning("Impossible de lire %s : %s", config_path, e)
+            logger.warning("Cannot read %s: %s", config_path, e)
             continue
 
         adapter_base = cfg.get("base_model_name_or_path", "")

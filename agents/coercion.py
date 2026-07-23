@@ -40,12 +40,12 @@ def _coerce_one(name: str, value: str, ann: Any) -> Any:
             if str(member) == value:
                 return member
         allowed = [str(v) for v in members]
-        raise CoercionError(f"{name}={value!r} hors domaine {allowed}")
+        raise CoercionError(f"{name}={value!r} not in domain {allowed}")
     if ann is int:
         try:
             return int(value)
         except ValueError as exc:
-            raise CoercionError(f"{name}={value!r} n'est pas un entier") from exc
+            raise CoercionError(f"{name}={value!r} is not an integer") from exc
     if ann is bool:
         low = value.strip().lower()
         if low in _TRUE:

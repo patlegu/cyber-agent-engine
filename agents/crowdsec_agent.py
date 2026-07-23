@@ -385,7 +385,7 @@ Fonctions valides: {}
         :param decision_type: Filtre sur le type de décision associé (ex: "ban", "captcha").
         :param origin: Filtre sur l'origine de l'alerte (ex: "crowdsec", "cscli").
         """
-        logger.info(f"[CrowdSec] Consultation alertes (limit: {limit})")
+        logger.info(f"[CrowdSec] Fetching alerts (limit: {limit})")
 
         if self.client:
             try:
@@ -417,7 +417,7 @@ Fonctions valides: {}
 
         :param alert_id: Identifiant numérique de l'alerte (visible dans get_alerts).
         """
-        logger.info(f"[CrowdSec] Consultation alerte: {alert_id}")
+        logger.info(f"[CrowdSec] Fetching alert: {alert_id}")
 
         if self.client:
             try:
@@ -442,7 +442,7 @@ Fonctions valides: {}
 
         :param alert_id: Identifiant numérique de l'alerte à supprimer (visible dans get_alerts).
         """
-        logger.info(f"[CrowdSec] Suppression alerte: {alert_id}")
+        logger.info(f"[CrowdSec] Removing alert: {alert_id}")
 
         if self.client:
             try:
@@ -455,7 +455,7 @@ Fonctions valides: {}
 
     async def _get_allowlists(self) -> Dict:
         """Liste toutes les allowlists (listes blanches) configurées dans CrowdSec."""
-        logger.info("[CrowdSec] Consultation allowlists")
+        logger.info("[CrowdSec] Fetching allowlists")
 
         if self.client:
             try:

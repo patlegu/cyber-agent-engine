@@ -230,14 +230,14 @@ class PfSenseAPIClient(OPNsenseAPIClient):
             response = await self.get_system_info()
             
             if response and 'platform' in response:
-                logger.info(f"✓ Connexion pfSense OK - Platform: {response.get('platform')}")
+                logger.info(f"✓ pfSense connection OK - Platform: {response.get('platform')}")
                 return True
             
             # Fallback sur la méthode parente
             return await super().test_connection()
             
         except Exception as e:
-            logger.error(f"✗ Erreur de connexion pfSense: {e}")
+            logger.error(f"✗ pfSense connection error: {e}")
             return False
 
     def get_api_version_info(self) -> Dict:

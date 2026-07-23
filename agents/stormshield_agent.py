@@ -49,7 +49,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _block_ip(self, ip: str, reason: str = "Security threat") -> Dict:
         """Bloque une adresse IP sur le firewall."""
-        logger.info(f"[Stormshield] Blocage IP: {ip} (raison: {reason})")
+        logger.info(f"[Stormshield] Blocking IP: {ip} (reason: {reason})")
 
         # TODO: Appel API réel Stormshield
         # POST /api/host/policy/filter
@@ -102,7 +102,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _get_active_connections(self, limit: int = 100) -> Dict:
         """Récupère les connexions actives."""
-        logger.info(f"[Stormshield] Consultation connexions actives (limit: {limit})")
+        logger.info(f"[Stormshield] Fetching active connections (limit: {limit})")
 
         # TODO: Appel API réel
         return {
@@ -133,7 +133,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _delete_network_object(self, object_id: str) -> Dict:
         """Supprime un objet réseau."""
-        logger.info(f"[Stormshield] Suppression objet: {object_id}")
+        logger.info(f"[Stormshield] Removing object: {object_id}")
 
         # TODO: Appel API réel
         return {

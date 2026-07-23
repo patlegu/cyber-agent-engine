@@ -43,7 +43,7 @@ class AliasesMixin:
     @safety_snapshot
     async def _delete_alias(self, uuid: str) -> Dict:
         """Supprime un alias."""
-        logger.info(f"[OPNsense] Suppression alias: {uuid}")
+        logger.info(f"[OPNsense] Removing alias: {uuid}")
 
         if self._api_client:
             try:
@@ -53,7 +53,7 @@ class AliasesMixin:
                     logger.info(f"✓ Alias {uuid} removed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression alias: {e}")
+                logger.error(f"Alias removal error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
@@ -61,7 +61,7 @@ class AliasesMixin:
     @safety_snapshot
     async def _update_alias(self, uuid: str, **kwargs) -> Dict:
         """Modifie un alias existant."""
-        logger.info(f"[OPNsense] Modification alias: {uuid}")
+        logger.info(f"[OPNsense] Modifying alias: {uuid}")
 
         if self._api_client:
             try:
@@ -74,20 +74,20 @@ class AliasesMixin:
                     logger.info(f"✓ Alias {uuid} modified")
                 return response
             except Exception as e:
-                logger.error(f"Erreur modification alias: {e}")
+                logger.error(f"Alias modification error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "updated", "uuid": uuid, "mode": "simulation"}
 
     async def _get_alias(self, uuid: Optional[str] = None) -> Dict:
         """Récupère un ou tous les alias."""
-        logger.info(f"[OPNsense] Consultation alias{f': {uuid}' if uuid else ''}")
+        logger.info(f"[OPNsense] Fetching alias{f': {uuid}' if uuid else ''}")
 
         if self._api_client:
             try:
                 return await self._api_client.get_alias(uuid)
             except Exception as e:
-                logger.error(f"Erreur consultation alias: {e}")
+                logger.error(f"Alias fetch error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"total": 15, "aliases": [], "mode": "simulation"}
@@ -95,7 +95,7 @@ class AliasesMixin:
     @safety_snapshot
     async def _import_alias(self, uuid: str, content: str) -> Dict:
         """Importe des entrées dans un alias depuis un fichier/URL."""
-        logger.info(f"[OPNsense] Import dans alias: {uuid}")
+        logger.info(f"[OPNsense] Importing into alias: {uuid}")
 
         if self._api_client:
             try:
@@ -105,7 +105,7 @@ class AliasesMixin:
                     logger.info(f"✓ Import into alias {uuid} performed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur import alias: {e}")
+                logger.error(f"Alias import error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "imported", "uuid": uuid, "mode": "simulation"}
@@ -113,7 +113,7 @@ class AliasesMixin:
     @safety_snapshot
     async def _flush_alias(self, alias: str) -> Dict:
         """Vide toutes les entrées d'un alias."""
-        logger.info(f"[OPNsense] Flush alias: {alias}")
+        logger.info(f"[OPNsense] Flushing alias: {alias}")
 
         if self._api_client:
             try:
@@ -123,7 +123,7 @@ class AliasesMixin:
                     logger.info(f"✓ Alias {alias} flushed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur flush alias: {e}")
+                logger.error(f"Alias flush error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "flushed", "alias": alias, "mode": "simulation"}
@@ -148,7 +148,7 @@ class AliasesMixin:
     @safety_snapshot
     async def _delete_from_alias(self, alias: str, address: str) -> Dict:
         """Retire une entrée d'un alias."""
-        logger.info(f"[OPNsense] Retrait {address} de alias {alias}")
+        logger.info(f"[OPNsense] Removing {address} from alias {alias}")
 
         if self._api_client:
             try:
@@ -157,20 +157,20 @@ class AliasesMixin:
                     logger.info(f"✓ {address} removed from {alias}")
                 return response
             except Exception as e:
-                logger.error(f"Erreur retrait alias: {e}")
+                logger.error(f"Alias removal-from error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "removed", "alias": alias, "address": address, "mode": "simulation"}
 
     async def _list_alias_content(self, alias: str) -> Dict:
         """Liste le contenu actuel d'un alias (table PF)."""
-        logger.info(f"[OPNsense] Liste contenu alias: {alias}")
+        logger.info(f"[OPNsense] Listing alias content: {alias}")
 
         if self._api_client:
             try:
                 return await self._api_client.list_alias_content(alias)
             except Exception as e:
-                logger.error(f"Erreur liste contenu alias: {e}")
+                logger.error(f"Alias content list error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"alias": alias, "content": [], "mode": "simulation"}
