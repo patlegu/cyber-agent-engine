@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Chargement et validation de la politique au démarrage.
 
 Une politique invalide DOIT empêcher le démarrage plutôt que de dégrader en

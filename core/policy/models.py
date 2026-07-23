@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Types de la couche politique — données pures, aucune logique d'I/O.
 
 Une ``Rule`` est un artefact que l'opérateur écrit et versionne. ``evaluate``

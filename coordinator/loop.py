@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Boucle ReAct gatée — orchestrateur multi-pas du coordinateur.
 
 Chaque pas : le Proposer propose (LLM → intention validée), `core.decide` rend un

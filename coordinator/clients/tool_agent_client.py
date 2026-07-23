@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 coordinator/clients/tool_agent_client.py — Client HTTP vers le tool-agent-server.
 

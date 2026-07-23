@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Manifestes de capacités déclarés — source de vérité du catalogue + conformance.
 
 Le catalogue de politique se construit depuis ces déclarations (déterministe,

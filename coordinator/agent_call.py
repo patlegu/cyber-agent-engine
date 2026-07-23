@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Adaptateur entre la frontière d'exécution de `core/` et le transport agent.
 
 `core.execution.execute` appelle `call(capability, real_args)` avec une capacité

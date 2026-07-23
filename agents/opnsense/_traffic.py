@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Mixin pour le Traffic Shaping OPNsense (QoS / dummynet) — 11 méthodes.
 

@@ -329,6 +329,23 @@ invalid (fail-closed). GPU image: documented override (CUDA base + `pip install
 - **`policy.example.yml`** ships with the source repository, not the pip wheel —
   copy it from the repo (or write your own from the policy format above).
 
+### Releases & CI
+
+- **CI** (`.github/workflows/ci.yml`): on every push to `main` and every pull
+  request, runs ruff (maintained source surface), mypy, and the full test suite.
+- **Release** (`.github/workflows/release.yml`): pushing a `v*` tag runs the test
+  gate, then publishes the sdist+wheel to **PyPI** (Trusted Publishing / OIDC — no
+  stored token) and a CPU Docker image to **GHCR**
+  (`ghcr.io/patlegu/cyber-agent-engine:<tag>` + `:latest`).
+- **One-time PyPI setup:** create a **Trusted Publisher** on PyPI for project
+  `cyber-agent-engine` (owner `patlegu`, repo `cyber-agent-engine`, workflow
+  `release.yml`, environment `pypi`). GHCR needs no setup (uses `GITHUB_TOKEN`).
+- **Cutting a release:** align `[project].version` in `pyproject.toml`, then
+  `git tag vX.Y.Z && git push origin vX.Y.Z` (the tag must equal the version or the
+  release job fails).
+- The GHCR image is the **CPU** variant; the GPU image is a local build
+  (`Dockerfile.gpu`).
+
 ## License
 
 This program is free software under **AGPL-3.0-or-later** — see [LICENSE](LICENSE).

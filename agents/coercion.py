@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Coercition des arguments string CAP v2 vers les types déclarés par la fonction.
 
 Les args CAP v2 sont toujours des strings (chaîne de confiance string de bout en

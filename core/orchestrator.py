@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Orchestrateur de confiance — le cœur mince qui compose les feuilles pures.
 
 Flux : requête → tokenize → le LLM PROPOSE une intention → validation catalogue →

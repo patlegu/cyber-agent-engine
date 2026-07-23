@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Journal d'audit — append-only, JETONS uniquement.
 
 L'audit reçoit des données déjà tokenisées (l'invariant est vérifié par test de

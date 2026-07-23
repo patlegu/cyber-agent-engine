@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Extracteur PII regex — déterministe, sans dépendance lourde.
 
 Alimente la tokenisation du coordinateur : détecte les entités réseau sensibles

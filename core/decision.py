@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Séquence de décision partagée : valider → évaluer → auditer → verdict.
 
 Extraite pour que l'orchestrateur mono-action ET la boucle ReAct gatée du

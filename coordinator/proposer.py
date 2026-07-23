@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Proposer — adapte un LLM brut en producteur d'intentions validées.
 
 Le LLM ne DÉCIDE rien : il PROPOSE. Sa sortie JSON est parsée, validée contre le

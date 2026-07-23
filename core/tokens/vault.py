@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Tokenisation réversible des valeurs sensibles, liée à la session.
 
 Le LLM et les logs ne voient QUE des jetons (``IP_1``, ``VPN_USER_2``). La table

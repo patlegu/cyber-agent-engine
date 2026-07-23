@@ -41,6 +41,10 @@ gpu = [
 dev = [
     "build>=1.0",
     "pytest>=8.0",
+    "pytest-asyncio>=1.0",
+    "pytest-cov>=4,<7",
+    "ruff>=0.6,<1",
+    "mypy>=1.11,<2",
 ]
 
 [project.urls]

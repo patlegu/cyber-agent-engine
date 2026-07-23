@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Fonctions étendues : Organisation, GeoIP, Firmware, DNS/DHCP — 14 méthodes.
 """

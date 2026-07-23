@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Client d'inférence OpenAI-compatible (HTTP) — sert un LoRA sans dépendance GPU.
 
 Sert de transport pour le chemin NL d'un agent : POST /chat/completions vers un

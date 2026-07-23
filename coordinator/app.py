@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """App FastAPI du coordinateur — auth globale fail-closed, délègue à la boucle gatée.
 
 Aucune route ne renvoie de valeur réelle : les résultats de la boucle sont déjà

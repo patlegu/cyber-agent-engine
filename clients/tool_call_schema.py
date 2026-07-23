@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Schéma JSON des tool_calls — module neutre, sans dépendance lourde.
 
 Extrait de native_vllm_client.py pour qu'importer le schéma (ex. dans base.py)

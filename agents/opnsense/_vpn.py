@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Mixin pour la gestion VPN OPNsense — 11 méthodes.
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Persistance de session pour la boucle gatée — chiffrée au repos, à échéance.
 
 Une session suspendue (verdict `approve`) contient le mapping jeton→valeur réelle

@@ -328,6 +328,23 @@ coordinateur refuse de démarrer si une variable obligatoire manque ou si
 - **`policy.example.yml`** est fourni avec le dépôt source, pas avec le wheel pip —
   le copier depuis le dépôt (ou écrire le vôtre depuis le format ci-dessus).
 
+### Releases & CI
+
+- **CI** (`.github/workflows/ci.yml`) : à chaque push sur `main` et chaque pull
+  request, lance ruff (surface source maintenue), mypy et la suite de tests.
+- **Release** (`.github/workflows/release.yml`) : pousser un tag `v*` lance le gate
+  de tests puis publie le sdist+wheel sur **PyPI** (Trusted Publishing / OIDC —
+  aucun token stocké) et une image Docker CPU sur **GHCR**
+  (`ghcr.io/patlegu/cyber-agent-engine:<tag>` + `:latest`).
+- **Setup PyPI (une fois)** : créer un **Trusted Publisher** sur PyPI pour le projet
+  `cyber-agent-engine` (propriétaire `patlegu`, dépôt `cyber-agent-engine`, workflow
+  `release.yml`, environnement `pypi`). GHCR ne nécessite rien (`GITHUB_TOKEN`).
+- **Couper une release** : aligner `[project].version` dans `pyproject.toml`, puis
+  `git tag vX.Y.Z && git push origin vX.Y.Z` (le tag doit égaler la version, sinon
+  le job de release échoue).
+- L'image GHCR est la variante **CPU** ; l'image GPU est un build local
+  (`Dockerfile.gpu`).
+
 ## Licence
 
 Ce programme est un logiciel libre sous **AGPL-3.0-or-later** — voir [LICENSE](LICENSE).

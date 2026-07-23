@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Mixin pour la gestion de Monit (Surveillance des services et auto-réparation) OPNsense.
 """
