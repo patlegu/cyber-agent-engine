@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Clients API pour les différents outils de sécurité réseau.
 """

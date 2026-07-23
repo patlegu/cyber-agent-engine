@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Catalogue de capacités — figé et vérifié au démarrage (pas rechargé à chaud).
 
 ``evaluate`` a besoin d'un référentiel stable pour que l'opérateur écrive des

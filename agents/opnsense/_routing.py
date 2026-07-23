@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Mixin pour la gestion du routage (Routing) OPNsense.
 """

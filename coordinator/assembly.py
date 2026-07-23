@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Assemblage de la boucle du coordinateur à partir de la config et d'un client d'agent.
 
 Sépare la logique de câblage (testable avec des doubles) de l'app FastAPI. Le

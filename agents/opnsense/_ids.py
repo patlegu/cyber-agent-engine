@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Mixin pour la gestion du système de détection d'intrusion (IDS / Suricata) OPNsense.
 """

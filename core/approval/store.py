@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Approbation humaine — fail-closed, liaison exacte intention↔autorisation.
 
 Une approbation jamais résolue n'autorise rien (défaut pending → jamais exécuté).

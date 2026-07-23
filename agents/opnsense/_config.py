@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Gestion de configuration + Backup/Restore — 9 méthodes.
 """

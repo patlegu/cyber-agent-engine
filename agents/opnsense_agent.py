@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 agents/opnsense_agent.py — Compatibilité ascendante.
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Règles de filtrage firewall — 6 méthodes.
 """

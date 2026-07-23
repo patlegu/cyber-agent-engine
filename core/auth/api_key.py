@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Authentification par clé API — fail-closed au démarrage, dépendance globale.
 
 Le serveur DOIT refuser de démarrer sans secret configuré (``load_auth_secret``

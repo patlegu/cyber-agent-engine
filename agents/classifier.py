@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Classifieur d'intention pour le routage vers l'agent approprié.
 

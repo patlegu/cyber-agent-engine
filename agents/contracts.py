@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 agents/contracts.py — Contrats Pydantic partagés entre le tool-agent-server et le coordinateur.
 

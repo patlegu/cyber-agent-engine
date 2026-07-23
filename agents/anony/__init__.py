@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Package agents.anony — agent d'anonymisation de logs et documents de sécurité.
 

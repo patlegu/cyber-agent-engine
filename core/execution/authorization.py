@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Preuve d'autorisation infalsifiable.
 
 ``execution.execute`` n'accepte QUE un ``Authorized``, que seuls ``grant`` (verdict

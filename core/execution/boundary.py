@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Frontière d'exécution : détokenise puis appelle l'agent-outil.
 
 Seul endroit (avec la vue d'approbation humaine) où une valeur réelle réapparaît.

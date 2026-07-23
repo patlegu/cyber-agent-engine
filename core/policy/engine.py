@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Évaluateur de politique — fonction pure, déterministe, défaut fail-closed.
 
 Confronte une ``Intention`` proposée par le LLM à la liste de règles de

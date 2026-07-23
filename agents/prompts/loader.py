@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Prompt Loader - Utility for loading and rendering external prompts.
 

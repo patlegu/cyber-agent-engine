@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Câblage du backend d'inférence NL des agents depuis l'environnement.
 
 Construit un OpenAICompatClient partagé (si AGENT_INFER_BASE_URL est défini) et

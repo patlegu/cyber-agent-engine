@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Fonctions legacy — block_ip / unblock_ip.
 """

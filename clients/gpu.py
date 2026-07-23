@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """Chargement paresseux des composants GPU, avec message d'erreur lisible.
 
 Le loader vLLM in-process (`NativeVLLMClient`) tire torch+vllm. On ne l'importe
