@@ -52,7 +52,7 @@ class PfSenseAPIClient(OPNsenseAPIClient):
         super().__init__(base_url, api_key, api_secret, verify_ssl, timeout)
         self.api_version = api_version
         self.use_bearer_auth = not api_secret  # pfREST n'utilise pas de secret
-        logger.info(f"Client API pfSense initialisé (version: {api_version}, auth: {'Bearer' if self.use_bearer_auth else 'Basic'})")
+        logger.info(f"pfSense API client initialized (version: {api_version}, auth: {'Bearer' if self.use_bearer_auth else 'Basic'})")
 
     def _build_url(self, endpoint: str) -> str:
         """
@@ -111,7 +111,7 @@ class PfSenseAPIClient(OPNsenseAPIClient):
             response.raise_for_status()
             return response.json() if response.content else {}
         except Exception as e:
-            logger.error(f"Erreur requête {method} {url}: {e}")
+            logger.error(f"Request error {method} {url}: {e}")
             raise
 
     # ========================================================================
@@ -256,7 +256,7 @@ class PfSenseAPIClient(OPNsenseAPIClient):
                 "base_url": self.base_url
             }
         except Exception as e:
-            logger.error(f"Erreur récupération version: {e}")
+            logger.error(f"Version retrieval error: {e}")
             return {
                 "api_version": self.api_version,
                 "error": str(e)

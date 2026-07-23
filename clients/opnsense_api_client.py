@@ -67,7 +67,7 @@ class OPNsenseAPIClient:
             timeout=timeout
         )
         
-        logger.info(f"OPNsense API Client initialisé: {base_url}")
+        logger.info(f"OPNsense API client initialized: {base_url}")
     
     async def _request(
         self,
@@ -647,7 +647,7 @@ class OPNsenseAPIClient:
             response.raise_for_status()
             return response.text
         except Exception as e:
-            logger.error(f"Erreur téléchargement backup: {e}")
+            logger.error(f"Backup download error: {e}")
             raise OPNsenseAPIError(f"Download failed: {str(e)}")
 
     async def list_restore_points(self) -> Dict:
