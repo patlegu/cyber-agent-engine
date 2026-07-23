@@ -81,7 +81,7 @@ class FilterRulesMixin:
         :param action: Action à appliquer : 'block' pour bloquer, 'pass' pour autoriser.
             Par défaut : 'block'. NE PAS utiliser 'allow', 'deny' ou 'drop'.
         """
-        logger.info(f"[OPNsense] Création règle: {description} | interface={interface} | action={action}")
+        logger.info(f"[OPNsense] Creating rule: {description} | interface={interface} | action={action}")
 
         if self._api_client:
             try:
@@ -109,12 +109,12 @@ class FilterRulesMixin:
 
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Règle '{description}' créée et appliquée")
+                    logger.info(f"✓ Rule '{description}' created and applied")
 
                 return response
 
             except Exception as e:
-                logger.error(f"Erreur création règle: {e}")
+                logger.error(f"Rule creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {
@@ -127,17 +127,17 @@ class FilterRulesMixin:
     @safety_snapshot
     async def _delete_filter_rule(self, uuid: str) -> Dict:
         """Supprime une règle de filtrage."""
-        logger.info(f"[OPNsense] Suppression règle: {uuid}")
+        logger.info(f"[OPNsense] Removing rule: {uuid}")
 
         if self._api_client:
             try:
                 response = await self._api_client.delete_filter_rule(uuid)
                 if response.get('result') == 'deleted':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Règle {uuid} supprimée et appliquée")
+                    logger.info(f"✓ Rule {uuid} removed and applied")
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression règle: {e}")
+                logger.error(f"Rule removal error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
@@ -145,7 +145,7 @@ class FilterRulesMixin:
     @safety_snapshot
     async def _update_filter_rule(self, uuid: str, **kwargs) -> Dict:
         """Modifie une règle de filtrage existante."""
-        logger.info(f"[OPNsense] Modification règle: {uuid}")
+        logger.info(f"[OPNsense] Modifying rule: {uuid}")
 
         if self._api_client:
             try:
@@ -153,10 +153,10 @@ class FilterRulesMixin:
                 response = await self._api_client.update_filter_rule(uuid, rule_data)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Règle {uuid} modifiée et appliquée")
+                    logger.info(f"✓ Rule {uuid} modified and applied")
                 return response
             except Exception as e:
-                logger.error(f"Erreur modification règle: {e}")
+                logger.error(f"Rule modification error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "updated", "uuid": uuid, "mode": "simulation"}
@@ -164,17 +164,17 @@ class FilterRulesMixin:
     @safety_snapshot
     async def _toggle_filter_rule(self, uuid: str, enabled: bool) -> Dict:
         """Active ou désactive une règle."""
-        logger.info(f"[OPNsense] Toggle règle {uuid}: {'enabled' if enabled else 'disabled'}")
+        logger.info(f"[OPNsense] Toggle rule {uuid}: {'enabled' if enabled else 'disabled'}")
 
         if self._api_client:
             try:
                 response = await self._api_client.toggle_filter_rule(uuid, enabled)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Règle {uuid} {'activée' if enabled else 'désactivée'}")
+                    logger.info(f"✓ Rule {uuid} {'enabled' if enabled else 'disabled'}")
                 return response
             except Exception as e:
-                logger.error(f"Erreur toggle règle: {e}")
+                logger.error(f"Rule toggle error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "toggled", "uuid": uuid, "enabled": enabled, "mode": "simulation"}
@@ -182,17 +182,17 @@ class FilterRulesMixin:
     @safety_snapshot
     async def _move_filter_rule(self, uuid: str, before_uuid: str, **kwargs) -> Dict:
         """Déplace une règle avant une autre."""
-        logger.info(f"[OPNsense] Déplacement règle {uuid} avant {before_uuid}")
+        logger.info(f"[OPNsense] Moving rule {uuid} before {before_uuid}")
 
         if self._api_client:
             try:
                 response = await self._api_client.move_filter_rule(uuid, before_uuid)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Règle {uuid} déplacée")
+                    logger.info(f"✓ Rule {uuid} moved")
                 return response
             except Exception as e:
-                logger.error(f"Erreur déplacement règle: {e}")
+                logger.error(f"Rule move error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "moved", "uuid": uuid, "mode": "simulation"}
@@ -204,14 +204,14 @@ class FilterRulesMixin:
         uuid, description, action, interface, protocol, direction,
         source, destination, destination_port, enabled.
         """
-        logger.info(f"[OPNsense] Consultation règles{f': {uuid}' if uuid else ''}")
+        logger.info(f"[OPNsense] Checking rules{f': {uuid}' if uuid else ''}")
 
         if self._api_client:
             try:
                 raw = await self._api_client.get_filter_rule(uuid)
                 return _normalize_filter_rules(raw, uuid)
             except Exception as e:
-                logger.error(f"Erreur consultation règles: {e}")
+                logger.error(f"Rule check error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"total": 0, "rules": [], "mode": "simulation"}

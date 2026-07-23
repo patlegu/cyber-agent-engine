@@ -143,44 +143,44 @@ class IDSMixin:
 
         Télécharge et installe la dernière version des signatures de détection.
         """
-        logger.info("[OPNsense] Mise à jour des règles IDS")
+        logger.info("[OPNsense] Updating IDS rules")
         if self._api_client:
             try:
                 return await self._api_client.update_ids_rules()
             except Exception as e:
-                logger.error(f"Erreur mise à jour règles IDS: {e}")
+                logger.error(f"IDS rules update error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "updated", "mode": "simulation"}
 
     async def _start_ids(self) -> Dict:
         """Démarre le service IDS Suricata sur OPNsense."""
-        logger.info("[OPNsense] Démarrage IDS")
+        logger.info("[OPNsense] Starting IDS")
         if self._api_client:
             try:
                 return await self._api_client.start_ids()
             except Exception as e:
-                logger.error(f"Erreur démarrage IDS: {e}")
+                logger.error(f"IDS startup error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "started", "mode": "simulation"}
 
     async def _stop_ids(self) -> Dict:
         """Arrête le service IDS Suricata sur OPNsense."""
-        logger.info("[OPNsense] Arrêt IDS")
+        logger.info("[OPNsense] Stopping IDS")
         if self._api_client:
             try:
                 return await self._api_client.stop_ids()
             except Exception as e:
-                logger.error(f"Erreur arrêt IDS: {e}")
+                logger.error(f"IDS stop error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "stopped", "mode": "simulation"}
 
     async def _restart_ids(self) -> Dict:
         """Redémarre le service IDS Suricata (applique les changements de config)."""
-        logger.info("[OPNsense] Redémarrage IDS")
+        logger.info("[OPNsense] Restarting IDS")
         if self._api_client:
             try:
                 return await self._api_client.restart_ids()
             except Exception as e:
-                logger.error(f"Erreur redémarrage IDS: {e}")
+                logger.error(f"IDS restart error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "restarted", "mode": "simulation"}

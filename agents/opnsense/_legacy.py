@@ -32,7 +32,7 @@ class LegacyMixin:
                 msg = str(result.get("message", "")).lower()
 
                 if status == "error" and ("not found" in msg or "doesn't exist" in msg):
-                    logger.info("Alias BlockedIPs introuvable, création en cours...")
+                    logger.info("BlockedIPs alias not found, creating...")
                     create_res = await self._create_alias(
                         name="BlockedIPs",
                         type="host",
@@ -64,7 +64,7 @@ class LegacyMixin:
         if not target_ip:
             return {"status": "error", "message": "Missing 'ip' or 'address' parameter"}
 
-        logger.info(f"[OPNsense] Déblocage IP: {target_ip}")
+        logger.info(f"[OPNsense] Unblocking IP: {target_ip}")
 
         if self._api_client:
             if self.platform == "linux":
@@ -76,7 +76,7 @@ class LegacyMixin:
                 result = await self._delete_from_alias("BlockedIPs", target_ip)
                 return {"status": "unblocked", "ip": target_ip, "result": result}
             except Exception as e:
-                logger.error(f"Erreur déblocage IP: {e}")
+                logger.error(f"IP unblock error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "unblocked", "ip": target_ip, "mode": "simulation"}

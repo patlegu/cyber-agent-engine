@@ -16,7 +16,7 @@ class NATMixin:
     @safety_snapshot
     async def _create_nat_outbound(self, interface: str, source: str, **kwargs) -> Dict:
         """Crée une règle NAT sortant (masquerading)."""
-        logger.info(f"[OPNsense] Création NAT sortant: {source} via {interface}")
+        logger.info(f"[OPNsense] Creating outbound NAT: {source} via {interface}")
 
         if self._api_client:
             try:
@@ -30,10 +30,10 @@ class NATMixin:
                 response = await self._api_client.add_nat_outbound(nat_data)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info("✓ NAT sortant créé")
+                    logger.info("✓ Outbound NAT created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création NAT sortant: {e}")
+                logger.error(f"Outbound NAT creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "created", "uuid": f"nat-out-{hash(source) % 10000}", "mode": "simulation"}
@@ -48,7 +48,7 @@ class NATMixin:
                 response = await self._api_client.delete_nat_outbound(uuid)
                 if response.get('result') == 'deleted':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ NAT sortant {uuid} supprimé")
+                    logger.info(f"✓ Outbound NAT {uuid} removed")
                 return response
             except Exception as e:
                 logger.error(f"Erreur suppression NAT sortant: {e}")
@@ -84,10 +84,10 @@ class NATMixin:
                 response = await self._api_client.add_nat_port_forward(pf_data)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info("✓ Port forward créé")
+                    logger.info("✓ Port forward created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création port forward: {e}")
+                logger.error(f"Port forward creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "created", "uuid": f"pf-{hash(destination_port) % 10000}", "mode": "simulation"}
@@ -110,10 +110,10 @@ class NATMixin:
                 response = await self._api_client.add_nat_one_to_one(nat_data)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info("✓ NAT 1:1 créé")
+                    logger.info("✓ NAT 1:1 created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création NAT 1:1: {e}")
+                logger.error(f"NAT 1:1 creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "created", "uuid": f"nat1to1-{hash(external_ip) % 10000}", "mode": "simulation"}
@@ -128,7 +128,7 @@ class NATMixin:
                 response = await self._api_client.delete_nat_one_to_one(uuid)
                 if response.get('result') == 'deleted':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ NAT 1:1 {uuid} supprimé")
+                    logger.info(f"✓ NAT 1:1 {uuid} removed")
                 return response
             except Exception as e:
                 logger.error(f"Erreur suppression NAT 1:1: {e}")

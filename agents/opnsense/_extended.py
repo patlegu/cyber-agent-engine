@@ -18,7 +18,7 @@ class ExtendedMixin:
     @safety_snapshot
     async def _create_category(self, name: str, **kwargs) -> Dict:
         """Crée une catégorie pour organiser les règles."""
-        logger.info(f"[OPNsense] Création catégorie: {name}")
+        logger.info(f"[OPNsense] Creating category: {name}")
 
         if self._api_client:
             try:
@@ -26,10 +26,10 @@ class ExtendedMixin:
                 response = await self._api_client.create_category(cat_data)
                 if response.get('result') == 'saved':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Catégorie '{name}' créée")
+                    logger.info(f"✓ Category '{name}' created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création catégorie: {e}")
+                logger.error(f"Category creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "created", "uuid": f"cat-{hash(name) % 10000}", "mode": "simulation"}
@@ -37,30 +37,30 @@ class ExtendedMixin:
     @safety_snapshot
     async def _delete_category(self, uuid: str) -> Dict:
         """Supprime une catégorie."""
-        logger.info(f"[OPNsense] Suppression catégorie: {uuid}")
+        logger.info(f"[OPNsense] Removing category: {uuid}")
 
         if self._api_client:
             try:
                 response = await self._api_client.delete_category(uuid)
                 if response.get('result') == 'deleted':
                     await self._api_client.apply_firewall_changes()
-                    logger.info(f"✓ Catégorie {uuid} supprimée")
+                    logger.info(f"✓ Category {uuid} removed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression catégorie: {e}")
+                logger.error(f"Category removal error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
 
     async def _list_available_categories(self) -> Dict:
         """Liste toutes les catégories disponibles."""
-        logger.info("[OPNsense] Liste catégories")
+        logger.info("[OPNsense] Listing categories")
 
         if self._api_client:
             try:
                 return await self._api_client.list_available_categories()
             except Exception as e:
-                logger.error(f"Erreur liste catégories: {e}")
+                logger.error(f"Category list error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"categories": [], "mode": "simulation"}
@@ -68,15 +68,15 @@ class ExtendedMixin:
     @safety_snapshot
     async def _update_bogons(self) -> Dict:
         """Met à jour les listes de réseaux bogons."""
-        logger.info("[OPNsense] Mise à jour bogons")
+        logger.info("[OPNsense] Updating bogons")
 
         if self._api_client:
             try:
                 response = await self._api_client.update_bogons()
-                logger.info("✓ Bogons mis à jour")
+                logger.info("✓ Bogons updated")
                 return response
             except Exception as e:
-                logger.error(f"Erreur mise à jour bogons: {e}")
+                logger.error(f"Bogons update error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "updated", "mode": "simulation"}
@@ -113,7 +113,7 @@ class ExtendedMixin:
 
     async def _check_updates(self) -> Dict:
         """Vérifie la disponibilité des mises à jour du système."""
-        logger.info("[OPNsense] Vérification mises à jour")
+        logger.info("[OPNsense] Checking updates")
 
         if self._api_client:
             try:
@@ -122,7 +122,7 @@ class ExtendedMixin:
                 await asyncio.sleep(2)
                 return await self._api_client.get_upgrade_status()
             except Exception as e:
-                logger.error(f"Erreur vérification updates: {e}")
+                logger.error(f"Update check error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {
@@ -152,7 +152,7 @@ class ExtendedMixin:
         if self._api_client:
             try:
                 response = await self._api_client.upgrade_firmware(upgrade_type)
-                logger.warning("⚠ Upgrade lancé. Le système va peut-être redémarrer.")
+                logger.warning("⚠ Upgrade launched. The system may reboot.")
                 return response
             except Exception as e:
                 logger.error(f"Erreur lancement upgrade: {e}")
@@ -226,7 +226,7 @@ class ExtendedMixin:
 
     async def _search_dns_queries(self, search_phrase: str = "", limit: int = 100) -> Dict:
         """Recherche dans l'historique des requêtes DNS Unbound."""
-        logger.info(f"[OPNsense] Recherche requêtes DNS: '{search_phrase}'")
+        logger.info(f"[OPNsense] Searching DNS queries: '{search_phrase}'")
         
         if self._api_client:
             try:
@@ -310,12 +310,12 @@ class ExtendedMixin:
 
         :param uuid: UUID du certificat ACME à mettre à jour.
         """
-        logger.info(f"[OPNsense] Mise à jour certificat ACME: {uuid}")
+        logger.info(f"[OPNsense] Updating ACME certificate: {uuid}")
         if self._api_client:
             try:
                 return await self._api_client.update_acme_certificate(uuid)
             except Exception as e:
-                logger.error(f"Erreur mise à jour certificat ACME: {e}")
+                logger.error(f"ACME certificate update error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "updated", "uuid": uuid, "mode": "simulation"}
 
@@ -324,12 +324,12 @@ class ExtendedMixin:
 
         :param uuid: UUID du certificat ACME à révoquer.
         """
-        logger.info(f"[OPNsense] Révocation certificat ACME: {uuid}")
+        logger.info(f"[OPNsense] Revoking ACME certificate: {uuid}")
         if self._api_client:
             try:
                 return await self._api_client.revoke_acme_certificate(uuid)
             except Exception as e:
-                logger.error(f"Erreur révocation certificat ACME: {e}")
+                logger.error(f"ACME certificate revocation error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "revoked", "uuid": uuid, "mode": "simulation"}
 

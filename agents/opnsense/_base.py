@@ -160,9 +160,9 @@ class OPNsenseAgent(
                     verify_ssl=api_config.get('verify_ssl', True),
                     timeout=api_config.get('timeout', 30),
                 )
-                logger.info("✓ Client API OPNsense initialisé")
+                logger.info("✓ OPNsense API client initialized")
             else:
-                logger.debug("OPNsense: Initialisé sans API (mode locale/simulation)")
+                logger.debug("OPNsense: initialized without API (local/simulation mode)")
 
         elif self.platform == "pfsense":
             if api_config and all(k in api_config for k in ['base_url', 'api_key']):
@@ -172,14 +172,14 @@ class OPNsenseAgent(
                     api_key=api_config['api_key'],
                     verify_ssl=api_config.get('verify_ssl', True),
                 )
-                logger.info("✓ Client API pfSense initialisé (Polyfill)")
+                logger.info("✓ pfSense API client initialized (Polyfill)")
             else:
-                logger.debug("pfSense: Initialisé sans API (mode locale/simulation)")
+                logger.debug("pfSense: initialized without API (local/simulation mode)")
 
         elif self.platform == "linux":
             from clients.linux_sys_client import LinuxSysClient
             self._api_client = LinuxSysClient(config=api_config)
-            logger.info("✓ Client Système Linux initialisé (Polyfill)")
+            logger.info("✓ Linux System client initialized (Polyfill)")
 
     def _register_functions(self) -> Dict[str, callable]:
         """Enregistre toutes les fonctions OPNsense.

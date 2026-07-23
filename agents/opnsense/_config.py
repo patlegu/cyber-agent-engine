@@ -19,7 +19,7 @@ class ConfigMixin:
             try:
                 response = await self._api_client.apply_firewall_changes(rollback_timeout)
                 if response.get('status') == 'ok':
-                    logger.info("✓ Changements appliqués avec succès")
+                    logger.info("✓ Changes applied successfully")
                 return response
             except Exception as e:
                 logger.error(f"Erreur application changements: {e}")
@@ -34,7 +34,7 @@ class ConfigMixin:
         if self._api_client:
             try:
                 response = await self._api_client.cancel_firewall_rollback()
-                logger.info("✓ Rollback annulé, changements confirmés")
+                logger.info("✓ Rollback cancelled, changes confirmed")
                 return response
             except Exception as e:
                 logger.error(f"Erreur annulation rollback: {e}")
@@ -49,7 +49,7 @@ class ConfigMixin:
         if self._api_client:
             try:
                 response = await self._api_client.revert_firewall_changes()
-                logger.info("✓ Changements annulés")
+                logger.info("✓ Changes cancelled")
                 return response
             except Exception as e:
                 logger.error(f"Erreur revert: {e}")
@@ -59,15 +59,15 @@ class ConfigMixin:
 
     async def _create_firewall_savepoint(self, revision: Optional[str] = None) -> Dict:
         """Crée un point de sauvegarde."""
-        logger.info(f"[OPNsense] Création savepoint{f': {revision}' if revision else ''}")
+        logger.info(f"[OPNsense] Creating savepoint{f': {revision}' if revision else ''}")
 
         if self._api_client:
             try:
                 response = await self._api_client.create_firewall_savepoint(revision)
-                logger.info(f"✓ Savepoint créé: {response.get('revision', 'auto')}")
+                logger.info(f"✓ Savepoint created: {response.get('revision', 'auto')}")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création savepoint: {e}")
+                logger.error(f"Savepoint creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "saved", "revision": revision or "auto", "mode": "simulation"}
@@ -89,7 +89,7 @@ class ConfigMixin:
 
     async def _backup_configuration(self) -> Dict:
         """Télécharge la configuration complète (XML)."""
-        logger.info("[OPNsense] Téléchargement backup configuration")
+        logger.info("[OPNsense] Downloading configuration backup")
 
         if self._api_client:
             try:
@@ -145,7 +145,7 @@ class ConfigMixin:
         if self._api_client:
             try:
                 response = await self._api_client.revert_to_restore_point(revision_id)
-                logger.warning(f"⚠ Restauration déclenchée ({revision_id}). Le système peut redémarrer.")
+                logger.warning(f"⚠ Restore triggered ({revision_id}). The system may reboot.")
                 return response
             except Exception as e:
                 logger.error(f"Erreur restauration: {e}")
@@ -155,13 +155,13 @@ class ConfigMixin:
 
     async def _create_restore_point(self, description: str = "Agent Checkpoint") -> Dict:
         """Crée un point de sauvegarde de sécurité avant des changements risqués."""
-        logger.info(f"[OPNsense] Création point de sauvegarde: {description}")
+        logger.info(f"[OPNsense] Creating backup point: {description}")
 
         if self._api_client:
             try:
                 return await self._api_client.create_firewall_savepoint(revision=description)
             except Exception as e:
-                logger.error(f"Erreur création savepoint: {e}")
+                logger.error(f"Savepoint creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "saved", "revision": description, "mode": "simulation"}
