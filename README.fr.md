@@ -6,6 +6,8 @@ Système multi-agents IA pour l'automatisation réseau et la sécurité.
 
 Un **coordinateur LLM** décompose les demandes en langage naturel et délègue l'exécution à des **agents-outils spécialisés** (OPNsense, WireGuard, CrowdSec) via un socle de confiance (trust core) qui impose des décisions de politique fail-closed, une approbation humaine sur les actions irréversibles, et une tokenisation des PII avant que quoi que ce soit n'atteigne le LLM. Les agents interprètent optionnellement le langage naturel via un LoRA fine-tuné sur GPU local ; leur chemin d'exécution structuré ne requiert aucun modèle.
 
+> **Analyse détaillée :** une série de six articles sur l'architecture de confiance — [la série *cyber-agent-engine*](https://nope.breizhland.eu/cae-1-llm-firewall-trust-core/) sur le blog.
+
 ---
 
 ## Architecture

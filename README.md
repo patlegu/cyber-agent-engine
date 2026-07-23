@@ -6,6 +6,8 @@ Multi-agent AI system for network automation and security.
 
 An **LLM coordinator** breaks down natural-language requests and delegates execution to **specialized tool agents** (OPNsense, WireGuard, CrowdSec) through a trust core that enforces fail-closed policy decisions, human approval on irreversible actions, and PII tokenization before anything reaches the LLM. Agents optionally interpret natural language via a LoRA fine-tuned on a local GPU; their structured execution path needs no model at all.
 
+> **Write-up:** a six-part deep dive into the trust architecture — [the *cyber-agent-engine* series](https://nope.breizhland.eu/cae-1-llm-firewall-trust-core-en/) on the blog.
+
 ---
 
 ## Architecture
