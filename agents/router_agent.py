@@ -61,7 +61,7 @@ class RouterAgent:
     async def route_instruction(self, instruction: str) -> Dict:
         """Route l'instruction vers le bon agent."""
         intent = self._classify_intent(instruction)
-        logger.info(f"Intention identifiée: {intent}")
+        logger.info(f"Identified intent: {intent}")
         
         result = None
         tool_name = intent

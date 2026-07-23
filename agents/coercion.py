@@ -52,7 +52,7 @@ def _coerce_one(name: str, value: str, ann: Any) -> Any:
             return True
         if low in _FALSE:
             return False
-        raise CoercionError(f"{name}={value!r} n'est pas un booléen")
+        raise CoercionError(f"{name}={value!r} is not a boolean")
     return value
 
 

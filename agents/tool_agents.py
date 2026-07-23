@@ -32,9 +32,9 @@ from . import create_agent
 
 # Avertissement de dépréciation
 warnings.warn(
-    "tool_agents.py est déprécié. "
-    "Utilisez 'from agents import OPNsenseAgent' à la place. "
-    "Voir docs/AGENTS_REFACTORING.md pour plus de détails.",
+    "tool_agents.py is deprecated. "
+    "Use 'from agents import OPNsenseAgent' instead. "
+    "See docs/AGENTS_REFACTORING.md for more details.",
     DeprecationWarning,
     stacklevel=2
 )

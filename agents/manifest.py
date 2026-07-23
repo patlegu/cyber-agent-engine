@@ -58,9 +58,9 @@ def check_conformance(agent_name: str, live_caps: list[dict[str, Any]]) -> None:
     declared_sorted = {fn: sorted(req) for fn, req in declared.items()}
     if live.keys() != declared_sorted.keys():
         missing = declared_sorted.keys() ^ live.keys()
-        raise ManifestConformanceError(f"{agent_name}: fonctions divergentes {missing}")
+        raise ManifestConformanceError(f"{agent_name}: mismatched functions {missing}")
     for fn, req in declared_sorted.items():
         if live[fn] != req:
             raise ManifestConformanceError(
-                f"{agent_name}.{fn}: required déclaré {req} != live {live[fn]}"
+                f"{agent_name}.{fn}: declared required {req} != live {live[fn]}"
             )
