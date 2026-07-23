@@ -20,7 +20,7 @@ def load_native_vllm_client() -> Any:
         from clients.native_vllm_client import NativeVLLMClient  # noqa: PLC0415
     except ImportError as exc:
         raise GpuExtraRequired(
-            "Le loader vLLM in-process requiert l'extra GPU : "
+            "The in-process vLLM loader requires the GPU extra: "
             "pip install cyber-agent-engine[gpu]"
         ) from exc
     return NativeVLLMClient

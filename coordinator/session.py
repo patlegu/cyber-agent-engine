@@ -99,5 +99,5 @@ def load_session_key(env: Mapping[str, str], var: str = "COORDINATOR_SESSION_KEY
     """Charge la clé Fernet depuis l'environnement — fail-closed si absente."""
     raw = env.get(var, "")
     if not raw:
-        raise SessionKeyNotConfigured(f"{var} absent : le coordinateur refuse de démarrer")
+        raise SessionKeyNotConfigured(f"{var} missing: the coordinator refuses to start")
     return raw.encode("utf-8")

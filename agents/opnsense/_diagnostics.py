@@ -13,7 +13,7 @@ class DiagnosticsMixin:
 
     async def _get_system_status(self) -> Dict:
         """Récupère l'état de santé du système (Polyfill multi-plateforme)."""
-        logger.info(f"[Polyfill] Récuperation status (platform={self.platform})")
+        logger.info(f"[Polyfill] Retrieving status (platform={self.platform})")
 
         if not self._api_client:
             return {"status": "Healthy", "mode": "simulation"}
@@ -26,18 +26,18 @@ class DiagnosticsMixin:
         try:
             return {"system": {"platform": "opnsense", "status": "Healthy"}}
         except Exception as e:
-            logger.error(f"Erreur status OPNsense: {e}")
+            logger.error(f"OPNsense status error: {e}")
             return {"status": "error", "message": str(e)}
 
     async def _get_firewall_log(self, limit: int = 100, **kwargs) -> Dict:
         """Récupère les logs du firewall."""
-        logger.info(f"[OPNsense] Consultation logs (limit: {limit})")
+        logger.info(f"[OPNsense] Fetching logs (limit: {limit})")
 
         if self._api_client:
             try:
                 return await self._api_client.get_firewall_log(limit=limit, **kwargs)
             except Exception as e:
-                logger.error(f"Erreur consultation logs: {e}")
+                logger.error(f"Log fetch error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {
@@ -51,69 +51,69 @@ class DiagnosticsMixin:
 
     async def _get_firewall_states(self, filter: Optional[str] = None) -> Dict:
         """Récupère les états actifs (connexions)."""
-        logger.info(f"[OPNsense] Consultation états{f': {filter}' if filter else ''}")
+        logger.info(f"[OPNsense] Checking states{f': {filter}' if filter else ''}")
 
         if self._api_client:
             try:
                 return await self._api_client.get_firewall_states(filter)
             except Exception as e:
-                logger.error(f"Erreur consultation états: {e}")
+                logger.error(f"State check error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"total": 156, "states": [], "mode": "simulation"}
 
     async def _kill_firewall_states(self, filter: str) -> Dict:
         """Termine des connexions spécifiques."""
-        logger.info(f"[OPNsense] Kill états: {filter}")
+        logger.info(f"[OPNsense] Killing states: {filter}")
 
         if self._api_client:
             try:
                 response = await self._api_client.kill_firewall_states(filter)
-                logger.info(f"✓ États terminés: {response.get('count', 0)}")
+                logger.info(f"✓ States terminated: {response.get('count', 0)}")
                 return response
             except Exception as e:
-                logger.error(f"Erreur kill états: {e}")
+                logger.error(f"State kill error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "killed", "filter": filter, "count": 5, "mode": "simulation"}
 
     async def _flush_firewall_states(self) -> Dict:
         """Termine toutes les connexions."""
-        logger.info("[OPNsense] Flush tous les états")
+        logger.info("[OPNsense] Flushing all states")
 
         if self._api_client:
             try:
                 response = await self._api_client.flush_firewall_states()
-                logger.info(f"✓ Tous les états terminés: {response.get('count', 0)}")
+                logger.info(f"✓ All states terminated: {response.get('count', 0)}")
                 return response
             except Exception as e:
-                logger.error(f"Erreur flush états: {e}")
+                logger.error(f"State flush error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "flushed", "count": 156, "mode": "simulation"}
 
     async def _get_firewall_statistics(self) -> Dict:
         """Récupère les statistiques globales."""
-        logger.info("[OPNsense] Consultation statistiques")
+        logger.info("[OPNsense] Fetching statistics")
 
         if self._api_client:
             try:
                 return await self._api_client.get_firewall_statistics()
             except Exception as e:
-                logger.error(f"Erreur consultation stats: {e}")
+                logger.error(f"Stats fetch error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"packets": 1234567, "bytes": 9876543210, "mode": "simulation"}
 
     async def _get_rule_statistics(self) -> Dict:
         """Récupère les statistiques par règle."""
-        logger.info("[OPNsense] Consultation stats règles")
+        logger.info("[OPNsense] Checking rule stats")
 
         if self._api_client:
             try:
                 return await self._api_client.get_rule_statistics()
             except Exception as e:
-                logger.error(f"Erreur consultation stats règles: {e}")
+                logger.error(f"Rule stats check error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"rules": [], "mode": "simulation"}

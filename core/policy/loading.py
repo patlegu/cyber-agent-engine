@@ -28,10 +28,10 @@ def load_policy(raw_rules: list[dict[str, Any]], catalog: CapabilityCatalog) -> 
         try:
             rule = Rule.model_validate(raw)
         except ValidationError as exc:
-            raise PolicyError(f"règle #{i} malformée : {exc}") from exc
+            raise PolicyError(f"rule #{i} malformed: {exc}") from exc
         if not any(fnmatchcase(name, rule.match.capability) for name in known):
             raise PolicyError(
-                f"règle #{i} : le glob '{rule.match.capability}' ne couvre aucune capacité connue"
+                f"rule #{i}: the glob '{rule.match.capability}' covers no known capability"
             )
         rules.append(rule)
     return rules

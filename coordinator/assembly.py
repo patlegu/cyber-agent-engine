@@ -63,12 +63,12 @@ async def assemble_loop(
         for name, funcs in discover_agents(caps).items():
             if name in agent_to_client:
                 raise AssemblyError(
-                    f"agent '{name}' exposé par plusieurs serveurs (routage ambigu)"
+                    f"agent '{name}' exposed by multiple servers (ambiguous routing)"
                 )
             live[name] = funcs
             agent_to_client[name] = client
     if not live:
-        raise AssemblyError("aucun agent découvert sur les serveurs d'agents")
+        raise AssemblyError("no agent discovered on the agent servers")
     catalog = await build_catalog(list(live), live)  # conformance C ; drift → refus
     raw = yaml.safe_load(config.policy_file.read_text(encoding="utf-8")) or {}
     policy = load_policy(raw.get("rules", []), catalog)  # fail-closed sur règle/glob invalide

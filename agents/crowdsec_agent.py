@@ -174,12 +174,12 @@ Fonctions valides: {}
             )
             
             content = response.get('message', {}).get('content', '')
-            logger.info(f"Réponse Ollama: {content[:100]}...")
-            
+            logger.info(f"Ollama response: {content[:100]}...")
+
             return self._parse_model_output(content, user_request)
-            
+
         except Exception as e:
-            logger.error(f"Erreur inférence Ollama: {e}")
+            logger.error(f"Ollama inference error: {e}")
             raise
 
     def _register_functions(self) -> Dict[str, callable]:
@@ -219,7 +219,7 @@ Fonctions valides: {}
         :param scenario: Scénario CrowdSec associé (ex: "crowdsecurity/ssh-bf").
             Utiliser "manual" pour un ban manuel sans scénario.
         """
-        logger.info(f"[CrowdSec] Bannissement IP: {ip} (durée: {duration})")
+        logger.info(f"[CrowdSec] Banning IP: {ip} (duration: {duration})")
 
         if self.client:
             try:
@@ -243,7 +243,7 @@ Fonctions valides: {}
 
         :param ip: Adresse IP à débannir (ex: "203.0.113.45").
         """
-        logger.info(f"[CrowdSec] Débannissement IP: {ip}")
+        logger.info(f"[CrowdSec] Unbanning IP: {ip}")
 
         if self.client:
             try:
@@ -280,7 +280,7 @@ Fonctions valides: {}
             (ex: "ssh,brute"). Retourne uniquement les décisions dont le scénario contient ces mots.
         :param limit: Nombre maximum de décisions à retourner (défaut : 100).
         """
-        logger.info(f"[CrowdSec] Consultation décisions (limit: {limit})")
+        logger.info(f"[CrowdSec] Listing decisions (limit: {limit})")
 
         if self.client:
             try:
@@ -328,7 +328,7 @@ Fonctions valides: {}
             'country' (pays entier via code ISO-3166-1).
         :param scenario: Scénario associé (ex: "crowdsecurity/ssh-bf"). Utiliser "manual" si aucun.
         """
-        logger.info(f"[CrowdSec] Ajout décision: {type} {scope}={value} ({duration})")
+        logger.info(f"[CrowdSec] Adding decision: {type} {scope}={value} ({duration})")
 
         if self.client:
             try:
@@ -349,7 +349,7 @@ Fonctions valides: {}
 
         :param decision_id: Identifiant de la décision (visible dans get_decisions).
         """
-        logger.info(f"[CrowdSec] Suppression décision: {decision_id}")
+        logger.info(f"[CrowdSec] Removing decision: {decision_id}")
         
         if self.client:
             try:
@@ -385,7 +385,7 @@ Fonctions valides: {}
         :param decision_type: Filtre sur le type de décision associé (ex: "ban", "captcha").
         :param origin: Filtre sur l'origine de l'alerte (ex: "crowdsec", "cscli").
         """
-        logger.info(f"[CrowdSec] Consultation alertes (limit: {limit})")
+        logger.info(f"[CrowdSec] Fetching alerts (limit: {limit})")
 
         if self.client:
             try:
@@ -417,7 +417,7 @@ Fonctions valides: {}
 
         :param alert_id: Identifiant numérique de l'alerte (visible dans get_alerts).
         """
-        logger.info(f"[CrowdSec] Consultation alerte: {alert_id}")
+        logger.info(f"[CrowdSec] Fetching alert: {alert_id}")
 
         if self.client:
             try:
@@ -442,7 +442,7 @@ Fonctions valides: {}
 
         :param alert_id: Identifiant numérique de l'alerte à supprimer (visible dans get_alerts).
         """
-        logger.info(f"[CrowdSec] Suppression alerte: {alert_id}")
+        logger.info(f"[CrowdSec] Removing alert: {alert_id}")
 
         if self.client:
             try:
@@ -455,7 +455,7 @@ Fonctions valides: {}
 
     async def _get_allowlists(self) -> Dict:
         """Liste toutes les allowlists (listes blanches) configurées dans CrowdSec."""
-        logger.info("[CrowdSec] Consultation allowlists")
+        logger.info("[CrowdSec] Fetching allowlists")
 
         if self.client:
             try:
@@ -476,7 +476,7 @@ Fonctions valides: {}
         :param ip_or_range: Adresse IP (ex: "192.168.1.10") ou plage CIDR (ex: "192.168.1.0/24")
             à vérifier dans les allowlists configurées.
         """
-        logger.info(f"[CrowdSec] Vérification allowlist: {ip_or_range}")
+        logger.info(f"[CrowdSec] Checking allowlist: {ip_or_range}")
 
         if self.client:
             try:
@@ -579,7 +579,7 @@ Fonctions valides: {}
         :param scenario: Nom du scénario ciblé (ex: "crowdsecurity/ssh-bf").
             Si omis, applique le mode simulation globalement à tous les scénarios.
         """
-        logger.info(f"[CrowdSec] Simulation {action} (scénario: {scenario or 'global'})")
+        logger.info(f"[CrowdSec] Simulation {action} (scenario: {scenario or 'global'})")
 
         if self.client:
             try:

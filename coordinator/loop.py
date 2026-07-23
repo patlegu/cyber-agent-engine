@@ -99,10 +99,10 @@ class GatedLoop:
         """Reprend une boucle suspendue après décision humaine sur l'approbation."""
         session = self._sessions.get(approval_id, now=self._clock())
         if session is None:
-            return Failed(reason="session inconnue ou expirée")
+            return Failed(reason="unknown or expired session")
         approval = self._approvals.get(approval_id)
         if approval is None:
-            return Failed(reason="approbation inconnue")
+            return Failed(reason="unknown approval")
         verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
         vault = Vault.restore(session.vault_snapshot)
         try:
@@ -111,7 +111,7 @@ class GatedLoop:
             self._sink.write(entry_from_verdict(
                 verdict, event="resume_refuse", rule_reason=session.rule_reason
             ))
-            return Denied(reason=f"approbation en état {approval.state}")
+            return Denied(reason=f"approval in state {approval.state}")
         # Consommer l'approbation AVANT d'exécuter : anti-rejeu fail-closed. Une panne
         # transitoire de l'agent pendant `execute` ne doit jamais laisser une session
         # approuvée rejouable (un ban n'est pas idempotent, il ne doit jamais s'exécuter deux fois).
@@ -132,14 +132,14 @@ class GatedLoop:
         """Rejette une approbation en attente : purge la session, aucune exécution."""
         approval = self._approvals.get(approval_id)
         if approval is None:
-            return Failed(reason="approbation inconnue")
+            return Failed(reason="unknown approval")
         session = self._sessions.get(approval_id, now=self._clock())
         rule_reason = session.rule_reason if session is not None else None
         self._approvals.reject(approval_id)
         self._sessions.delete(approval_id)
         verdict = Verdict(effect="approve", matched_rule=None, intention=approval.intention)
         self._sink.write(entry_from_verdict(verdict, event="rejected", rule_reason=rule_reason))
-        return Denied(reason="rejeté par l'opérateur")
+        return Denied(reason="rejected by the operator")
 
     def _retokenize(self, result: dict[str, Any], vault: Vault) -> str:
         """Jetonise le résultat : d'abord les valeurs déjà connues du vault (déterministe,
@@ -177,7 +177,7 @@ class GatedLoop:
                 intention, catalog=self._catalog, policy=self._policy, sink=self._sink
             )
             if verdict.effect == "deny":
-                return Denied(reason=f"politique: {intention.capability}")
+                return Denied(reason=f"policy: {intention.capability}")
             if verdict.effect == "approve":
                 sid = self._new_id()
                 self._approvals.create(intention, approval_id=sid)
@@ -196,4 +196,4 @@ class GatedLoop:
             results.append(result)
             history = [*history, self._retokenize(result, vault)]
             step += 1
-        return Failed(reason="nombre de pas maximal atteint")
+        return Failed(reason="maximum step count reached")

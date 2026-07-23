@@ -117,7 +117,7 @@ def _discover_lora_adapters(loras_dir: Path, base_model: str) -> Dict[str, str]:
         try:
             cfg = _json.loads(config_path.read_text())
         except Exception as e:
-            logger.warning("Impossible de lire %s : %s", config_path, e)
+            logger.warning("Cannot read %s: %s", config_path, e)
             continue
 
         adapter_base = cfg.get("base_model_name_or_path", "")
@@ -135,8 +135,8 @@ def _discover_lora_adapters(loras_dir: Path, base_model: str) -> Dict[str, str]:
             logger.info("  ✅ Adapter '%s' compatible (%s)", agent_name, adapter_base)
         else:
             logger.warning(
-                "  ⚠️  Adapter '%s' ignoré — base model incompatible "
-                "(adapter: %s, attendu: %s). Re-entraîner sur %s pour activer.",
+                "  ⚠️  Adapter '%s' skipped — incompatible base model "
+                "(adapter: %s, expected: %s). Retrain on %s to enable.",
                 agent_name, adapter_base, base_model, base_model,
             )
 
@@ -339,7 +339,7 @@ async def execute_command(request: AgentExecuteRequest) -> AgentExecuteResponse:
 
     resp = AgentExecuteResponse(
         success=False,
-        error="Aucun agent n'a pu interpréter cette commande.",
+        error="No agent could interpret this command.",
         error_code="FUNCTION_UNKNOWN",
         tool_name="server",
     )

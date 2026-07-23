@@ -129,7 +129,7 @@ class ToolAgent(ABC):
         self._load_model()
         
         logger.info(
-            f"Agent {tool_name} initialisé avec {len(self._functions)} fonctions"
+            f"Agent {tool_name} initialized with {len(self._functions)} functions"
         )
 
     @abstractmethod
@@ -277,7 +277,7 @@ class ToolAgent(ABC):
                     function=function_call.function,
                     args=function_call.args,
                     result=None,
-                    error=f"Fonction inconnue: {function_call.function}",
+                    error=f"Unknown function: {function_call.function}",
                     error_code=ErrorCode.FUNCTION_UNKNOWN,
                     tool_name=self.tool_name,
                     execution_time_ms=(time.time() - start_time) * 1000
@@ -379,7 +379,7 @@ class ToolAgent(ABC):
             return await self._call_function(function_call, start_time)
 
         except Exception as e:
-            logger.error(f"Erreur lors de l'exécution: {e}")
+            logger.error(f"Execution error: {e}")
             return ToolResult(
                 success=False,
                 function="unknown",
@@ -435,7 +435,7 @@ class ToolAgent(ABC):
             return await self._call_function(function_call, start_time)
         except Exception as e:
             import time as _t
-            logger.error(f"Erreur execute_direct({function}): {e}")
+            logger.error(f"execute_direct error ({function}): {e}")
             return ToolResult(
                 success=False,
                 function=function,
@@ -455,29 +455,29 @@ class ToolAgent(ABC):
         """
         # Si mode Ollama activé, on ne charge pas de modèle local
         if self.ollama_client:
-            logger.info(f"Mode Ollama activé (modèle: {self.ollama_config['model']})")
+            logger.info(f"Ollama mode enabled (model: {self.ollama_config['model']})")
             return
 
         # Vérifier si le chemin du modèle est fourni et existe
         if self.model_path is None or not os.path.exists(self.model_path):
             if self.model_path is None:
                 # Mode Tools-Only (pas d'erreur, juste informatif)
-                logger.info("ℹ️ Agent initialisé en mode 'Tools-Only' (pas de modèle LoRA local)")
+                logger.info("ℹ️ Agent initialized in 'Tools-Only' mode (no local LoRA model)")
             else:
-                logger.warning(f"⚠️ Modèle LoRA non trouvé au chemin spécifié: {self.model_path}")
-            
+                logger.warning(f"⚠️ LoRA model not found at the specified path: {self.model_path}")
+
             # Message informatif sur l'inférence
             if self.ollama_client:
-                logger.info(f"✅ Inférence déportée active via Ollama")
+                logger.info(f"✅ Remote inference active via Ollama")
             else:
-                logger.info("ℹ️ Inférence locale désactivée (mode simulation pour les requêtes NL)")
+                logger.info("ℹ️ Local inference disabled (simulation mode for NL requests)")
             return
-        
+
         try:
             # Essayer d'importer unsloth
             from unsloth import FastLanguageModel
-            
-            logger.info(f"Chargement du modèle LoRA depuis {self.model_path}...")
+
+            logger.info(f"Loading LoRA model from {self.model_path}...")
             
             # Charger le modèle avec unsloth
             self.model, self.tokenizer = FastLanguageModel.from_pretrained(
@@ -490,14 +490,14 @@ class ToolAgent(ABC):
             # Passer en mode inférence (plus rapide)
             FastLanguageModel.for_inference(self.model)
             
-            logger.info("✓ Modèle LoRA chargé avec succès")
-            
+            logger.info("✓ LoRA model loaded successfully")
+
         except ImportError:
-            logger.info("ℹ️ Unsloth n'est pas installé (utilisé pour l'inférence LoRA locale)")
+            logger.info("ℹ️ Unsloth is not installed (used for local LoRA inference)")
         except Exception as e:
-            logger.error(f"❌ Erreur lors du chargement du modèle LoRA: {e}")
-            logger.error(f"❌ Erreur lors du chargement du modèle LoRA: {e}")
-            logger.info("ℹ️ Fallback sur le mode simulation pour l'inférence")
+            logger.error(f"❌ Error loading the LoRA model: {e}")
+            logger.error(f"❌ Error loading the LoRA model: {e}")
+            logger.info("ℹ️ Falling back to simulation mode for inference")
 
     async def _infer_with_vllm(self, user_request: str) -> FunctionCall:
         """Inférence via Native vLLM Client (Multi-LoRA)."""
@@ -552,7 +552,7 @@ class ToolAgent(ABC):
             return self._parse_model_output(generated_text, user_request)
 
         except Exception as e:
-            logger.error(f"Erreur inférence vLLM: {e}")
+            logger.error(f"vLLM inference error: {e}")
             raise
 
     async def _infer_with_openai_compat(self, user_request: str) -> "FunctionCall":
@@ -594,8 +594,8 @@ class ToolAgent(ABC):
 
         # Sinon, échouer fermé : pas de simulation silencieuse pour le chemin NL
         raise NoInferenceBackend(
-            "Aucun backend d'inférence configuré (AGENT_INFER_BASE_URL/ollama/[gpu]). "
-            "Le chemin structuré execute_direct reste disponible sans modèle."
+            "No inference backend configured (AGENT_INFER_BASE_URL/ollama/[gpu]). "
+            "The structured execute_direct path remains available without a model."
         )
 
     async def _infer_with_lora(self, user_request: str) -> FunctionCall:
@@ -644,12 +644,12 @@ class ToolAgent(ABC):
             # Parser la sortie pour extraire la fonction et les arguments
             function_call = self._parse_model_output(generated_text, user_request)
             
-            logger.info(f"LoRA inférence: {function_call.function} (confidence: {function_call.confidence:.2f})")
-            
+            logger.info(f"LoRA inference: {function_call.function} (confidence: {function_call.confidence:.2f})")
+
             return function_call
-            
+
         except Exception as e:
-            logger.error(f"Erreur lors de l'inférence LoRA: {e}")
+            logger.error(f"Error during LoRA inference: {e}")
             raise
 
     async def _infer_with_ollama(self, user_request: str) -> FunctionCall:
@@ -675,12 +675,12 @@ class ToolAgent(ABC):
             )
             
             content = response.get('message', {}).get('content', '')
-            logger.info(f"Réponse Ollama: {content[:100]}...")
-            
+            logger.info(f"Ollama response: {content[:100]}...")
+
             return self._parse_model_output(content, user_request)
-            
+
         except Exception as e:
-            logger.error(f"Erreur inférence Ollama: {e}")
+            logger.error(f"Ollama inference error: {e}")
             raise
 
     def _build_chat_messages(self, user_request: str) -> List[Dict]:
@@ -876,7 +876,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
             # 3. Analyser les données JSON
             # Gérer le cas où le modèle retourne explicitement une liste vide []
             if clean_text.strip() == '[]':
-                logger.info("Modèle a retourné une liste vide, interprété comme 'unknown'.")
+                logger.info("Model returned an empty list, interpreted as 'unknown'.")
                 return FunctionCall(function="unknown", args={}, confidence=0.0, reasoning=reasoning, raw_output=raw_text)
 
             if json_data:
@@ -914,7 +914,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                     if func_name:
                         # Vérifier si le nom est valide, sinon faire du fuzzy matching
                         if func_name in self._functions:
-                            logger.info(f"Fonction identifiée: {func_name}")
+                            logger.info(f"Identified function: {func_name}")
                             return FunctionCall(
                                 function=func_name,
                                 args=args if isinstance(args, dict) else {},
@@ -944,7 +944,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                                     )
                                 # None in cache means previously unresolved → skip fuzzy
                             else:
-                                logger.warning(f"Fonction inconnue: {func_name}, tentative de fuzzy matching...")
+                                logger.warning(f"Unknown function: {func_name}, attempting fuzzy matching...")
 
                                 # Case-insensitive exact match check first
                                 for valid_name in self._functions.keys():
@@ -1001,10 +1001,10 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                                     # Cache miss, unresolvable
                                     self._function_resolution_cache[cache_key] = None
         except Exception as e:
-            logger.warning(f"Erreur lors du parsing tool call: {e}")
+            logger.warning(f"Error parsing tool call: {e}")
         
         # 4. Fallback: Simulation si échec du parsing
-        logger.warning(f"Aucune fonction valide identifiée dans la réponse du modèle")
+        logger.warning(f"No valid function identified in the model response")
         return FunctionCall(
             function="unknown",
             args={},
@@ -1047,7 +1047,7 @@ Valid function names: {}""".format(self.tool_name, ', '.join(sorted(self._functi
                     
                     # Si pas de paramètres obligatoires, utiliser cette fonction
                     if required_params == 0:
-                        logger.info(f"Simulation: utilisation de {func_name} (lecture sans arguments)")
+                        logger.info(f"Simulation: using {func_name} (read without arguments)")
                         return FunctionCall(
                             function=func_name,
                             args={},

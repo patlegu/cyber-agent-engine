@@ -32,13 +32,13 @@ class WireGuardLinuxClient:
             config_dir: Répertoire des configurations WireGuard
         """
         self.config_dir = Path(config_dir)
-        logger.info(f"Client WireGuard Linux initialisé (config: {config_dir})")
+        logger.info(f"WireGuard Linux client initialized (config: {config_dir})")
 
     async def _run_command(self, cmd: List[str], input_str: Optional[str] = None, check: bool = True) -> Dict:
         """
         Exécute une commande shell de façon asynchrone.
         """
-        logger.debug(f"Exécution: {' '.join(cmd)}")
+        logger.debug(f"Executing: {' '.join(cmd)}")
         
         proc = await asyncio.create_subprocess_exec(
             *cmd,
@@ -52,8 +52,8 @@ class WireGuardLinuxClient:
         stderr_str = stderr.decode().strip()
         
         if check and proc.returncode != 0:
-            logger.error(f"Erreur commande {' '.join(cmd)}: {stderr_str}")
-            raise RuntimeError(f"Commande échouée ({proc.returncode}): {stderr_str}")
+            logger.error(f"Command error {' '.join(cmd)}: {stderr_str}")
+            raise RuntimeError(f"Command failed ({proc.returncode}): {stderr_str}")
             
         return {
             "stdout": stdout_str,
@@ -88,7 +88,7 @@ class WireGuardLinuxClient:
         result = await self._run_command(['wg', 'pubkey'], input_str=private_key)
         public_key = result['stdout']
         
-        logger.info("Paire de clés WireGuard générée")
+        logger.info("WireGuard key pair generated")
         return {
             'private_key': private_key,
             'public_key': public_key
@@ -103,7 +103,7 @@ class WireGuardLinuxClient:
         """
         result = await self._run_command(['wg', 'genpsk'])
         psk = result['stdout']
-        logger.info("PSK WireGuard générée")
+        logger.info("WireGuard PSK generated")
         return psk
 
     # ========================================================================
@@ -153,7 +153,7 @@ PrivateKey = {private_key}
         config_file.write_text(config_content)
         config_file.chmod(0o600)
         
-        logger.info(f"Interface {interface} créée ({config_file})")
+        logger.info(f"Interface {interface} created ({config_file})")
         
         return {
             'interface': interface,
@@ -167,20 +167,20 @@ PrivateKey = {private_key}
         """Démarre une interface WireGuard."""
         try:
             await self._run_command(['wg-quick', 'up', interface])
-            logger.info(f"Interface {interface} démarrée")
+            logger.info(f"Interface {interface} started")
             return True
         except Exception as e:
-            logger.error(f"Erreur démarrage {interface}: {e}")
+            logger.error(f"Startup error {interface}: {e}")
             return False
 
     async def stop_interface(self, interface: str) -> bool:
         """Arrête une interface WireGuard."""
         try:
             await self._run_command(['wg-quick', 'down', interface])
-            logger.info(f"Interface {interface} arrêtée")
+            logger.info(f"Interface {interface} stopped")
             return True
         except Exception as e:
-            logger.error(f"Erreur arrêt {interface}: {e}")
+            logger.error(f"Stop error {interface}: {e}")
             return False
 
     async def restart_interface(self, interface: str) -> bool:
@@ -195,7 +195,7 @@ PrivateKey = {private_key}
         config_file = self.config_dir / f"{interface}.conf"
         if config_file.exists():
             config_file.unlink()
-            logger.info(f"Interface {interface} supprimée")
+            logger.info(f"Interface {interface} removed")
             return True
         return False
 
@@ -215,7 +215,7 @@ PrivateKey = {private_key}
         """Ajoute un peer à une interface WireGuard."""
         config_file = self.config_dir / f"{interface}.conf"
         if not config_file.exists():
-            raise FileNotFoundError(f"Interface {interface} n'existe pas")
+            raise FileNotFoundError(f"Interface {interface} does not exist")
 
         config = config_file.read_text()
         
@@ -232,17 +232,17 @@ PrivateKey = {private_key}
         config += peer_config
         config_file.write_text(config)
         
-        logger.info(f"Peer ajouté à {interface}")
+        logger.info(f"Peer added to {interface}")
         return True
 
     async def remove_peer(self, interface: str, public_key: str) -> bool:
         """Supprime un peer d'une interface WireGuard."""
         try:
             await self._run_command(['wg', 'set', interface, 'peer', public_key, 'remove'])
-            logger.info(f"Peer {public_key[:16]}... supprimé de {interface}")
+            logger.info(f"Peer {public_key[:16]}... removed from {interface}")
             return True
         except Exception as e:
-            logger.error(f"Erreur suppression peer: {e}")
+            logger.error(f"Peer removal error: {e}")
             return False
 
     # ========================================================================

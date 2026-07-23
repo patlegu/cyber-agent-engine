@@ -13,74 +13,74 @@ class ConfigMixin:
 
     async def _apply_firewall_changes(self, rollback_timeout: int = 0) -> Dict:
         """Applique les modifications du firewall."""
-        logger.info(f"[OPNsense] Application changements{f' (rollback: {rollback_timeout}s)' if rollback_timeout else ''}")
+        logger.info(f"[OPNsense] Applying changes{f' (rollback: {rollback_timeout}s)' if rollback_timeout else ''}")
 
         if self._api_client:
             try:
                 response = await self._api_client.apply_firewall_changes(rollback_timeout)
                 if response.get('status') == 'ok':
-                    logger.info("✓ Changements appliqués avec succès")
+                    logger.info("✓ Changes applied successfully")
                 return response
             except Exception as e:
-                logger.error(f"Erreur application changements: {e}")
+                logger.error(f"Apply changes error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "applied", "rollback_timeout": rollback_timeout, "mode": "simulation"}
 
     async def _cancel_firewall_rollback(self) -> Dict:
         """Annule le rollback automatique (confirme les changements)."""
-        logger.info("[OPNsense] Annulation rollback")
+        logger.info("[OPNsense] Cancelling rollback")
 
         if self._api_client:
             try:
                 response = await self._api_client.cancel_firewall_rollback()
-                logger.info("✓ Rollback annulé, changements confirmés")
+                logger.info("✓ Rollback cancelled, changes confirmed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur annulation rollback: {e}")
+                logger.error(f"Rollback cancellation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "confirmed", "mode": "simulation"}
 
     async def _revert_firewall_changes(self) -> Dict:
         """Annule les changements non appliqués."""
-        logger.info("[OPNsense] Revert changements")
+        logger.info("[OPNsense] Reverting changes")
 
         if self._api_client:
             try:
                 response = await self._api_client.revert_firewall_changes()
-                logger.info("✓ Changements annulés")
+                logger.info("✓ Changes cancelled")
                 return response
             except Exception as e:
-                logger.error(f"Erreur revert: {e}")
+                logger.error(f"Revert error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "reverted", "mode": "simulation"}
 
     async def _create_firewall_savepoint(self, revision: Optional[str] = None) -> Dict:
         """Crée un point de sauvegarde."""
-        logger.info(f"[OPNsense] Création savepoint{f': {revision}' if revision else ''}")
+        logger.info(f"[OPNsense] Creating savepoint{f': {revision}' if revision else ''}")
 
         if self._api_client:
             try:
                 response = await self._api_client.create_firewall_savepoint(revision)
-                logger.info(f"✓ Savepoint créé: {response.get('revision', 'auto')}")
+                logger.info(f"✓ Savepoint created: {response.get('revision', 'auto')}")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création savepoint: {e}")
+                logger.error(f"Savepoint creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "saved", "revision": revision or "auto", "mode": "simulation"}
 
     async def _get_interface_list(self) -> Dict:
         """Liste toutes les interfaces réseau (via l'overview officiel)."""
-        logger.info("[OPNsense] Liste interfaces")
+        logger.info("[OPNsense] Listing interfaces")
 
         if self._api_client:
             try:
                 return await self._api_client.get_interface_list()
             except Exception as e:
-                logger.error(f"Erreur liste interfaces: {e}")
+                logger.error(f"Interface list error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"interfaces": ["wan", "lan", "opt1", "opt2"], "mode": "simulation"}
@@ -89,7 +89,7 @@ class ConfigMixin:
 
     async def _backup_configuration(self) -> Dict:
         """Télécharge la configuration complète (XML)."""
-        logger.info("[OPNsense] Téléchargement backup configuration")
+        logger.info("[OPNsense] Downloading configuration backup")
 
         if self._api_client:
             try:
@@ -114,20 +114,20 @@ class ConfigMixin:
                     "size_kb": f"{size_kb:.2f} KB"
                 }
             except Exception as e:
-                logger.error(f"Erreur backup configuration: {e}")
+                logger.error(f"Configuration backup error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "success", "mode": "simulation", "message": "Fake backup downloaded"}
 
     async def _list_restore_points(self) -> Dict:
         """Liste les points de restauration disponibles."""
-        logger.info("[OPNsense] Liste points de restauration")
+        logger.info("[OPNsense] Listing restore points")
 
         if self._api_client:
             try:
                 return await self._api_client.list_restore_points()
             except Exception as e:
-                logger.error(f"Erreur liste restore points: {e}")
+                logger.error(f"Restore point list error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {
@@ -140,28 +140,28 @@ class ConfigMixin:
 
     async def _revert_to_restore_point(self, revision_id: str) -> Dict:
         """Restaure une configuration précédente."""
-        logger.info(f"[OPNsense] Restauration point: {revision_id}")
+        logger.info(f"[OPNsense] Restoring point: {revision_id}")
 
         if self._api_client:
             try:
                 response = await self._api_client.revert_to_restore_point(revision_id)
-                logger.warning(f"⚠ Restauration déclenchée ({revision_id}). Le système peut redémarrer.")
+                logger.warning(f"⚠ Restore triggered ({revision_id}). The system may reboot.")
                 return response
             except Exception as e:
-                logger.error(f"Erreur restauration: {e}")
+                logger.error(f"Restore error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "restored", "revision": revision_id, "mode": "simulation"}
 
     async def _create_restore_point(self, description: str = "Agent Checkpoint") -> Dict:
         """Crée un point de sauvegarde de sécurité avant des changements risqués."""
-        logger.info(f"[OPNsense] Création point de sauvegarde: {description}")
+        logger.info(f"[OPNsense] Creating backup point: {description}")
 
         if self._api_client:
             try:
                 return await self._api_client.create_firewall_savepoint(revision=description)
             except Exception as e:
-                logger.error(f"Erreur création savepoint: {e}")
+                logger.error(f"Savepoint creation error: {e}")
                 return {"status": "error", "message": str(e)}
 
         return {"status": "saved", "revision": description, "mode": "simulation"}

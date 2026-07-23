@@ -82,8 +82,8 @@ def create_agent(
 
     if tool_type not in agents:
         raise ValueError(
-            f"Type d'agent inconnu: {tool_type}. "
-            f"Types supportés: {list(agents.keys())}"
+            f"Unknown agent type: {tool_type}. "
+            f"Supported types: {list(agents.keys())}"
         )
 
     return agents[tool_type](model_path=model_path, api_config=api_config)

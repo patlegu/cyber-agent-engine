@@ -67,9 +67,9 @@ class PfSenseAgent(OPNsenseAgent):
                 verify_ssl=api_config.get('verify_ssl', True),
                 timeout=api_config.get('timeout', 30)
             )
-            logger.info("✓ Client API pfSense initialisé")
+            logger.info("✓ pfSense API client initialized")
         else:
-            logger.warning("⚠️  Mode simulation : pas de configuration API fournie")
+            logger.warning("⚠️  Simulation mode: no API configuration provided")
 
     # ========================================================================
     # Méthodes héritées d'OPNsense
@@ -103,7 +103,7 @@ class PfSenseAgent(OPNsenseAgent):
         :param action: Action à appliquer : 'block' pour bloquer, 'pass' pour autoriser.
             NE PAS utiliser 'allow', 'deny' ou 'drop'.
         """
-        logger.info(f"[pfSense] Création règle: {description}")
+        logger.info(f"[pfSense] Creating rule: {description}")
         
         # Appeler la méthode parente
         # Le client API pfSense gère les adaptations automatiquement
@@ -127,7 +127,7 @@ class PfSenseAgent(OPNsenseAgent):
         :param content: Liste des valeurs (ex: ["192.168.1.0/24", "10.0.0.1"]).
         :param description: Description optionnelle de l'alias.
         """
-        logger.info(f"[pfSense] Création alias: {name} (type: {type})")
+        logger.info(f"[pfSense] Creating alias: {name} (type: {type})")
         
         # Appeler la méthode parente
         return await super()._create_alias(name, type, content, description)
@@ -142,13 +142,13 @@ class PfSenseAgent(OPNsenseAgent):
         
         MÉTHODE SPÉCIFIQUE pfSense.
         """
-        logger.info(f"[pfSense] Consultation informations système")
-        
+        logger.info(f"[pfSense] Retrieving system info")
+
         if self._api_client:
             try:
                 return await self._api_client.get_system_info()
             except Exception as e:
-                logger.error(f"Erreur consultation système: {e}")
+                logger.error(f"Error retrieving system info: {e}")
                 return {"status": "error", "message": str(e)}
         
         return {
@@ -163,13 +163,13 @@ class PfSenseAgent(OPNsenseAgent):
         
         MÉTHODE SPÉCIFIQUE pfSense.
         """
-        logger.info(f"[pfSense] Liste des packages")
+        logger.info(f"[pfSense] Listing packages")
         
         if self._api_client:
             try:
                 return await self._api_client.get_packages()
             except Exception as e:
-                logger.error(f"Erreur liste packages: {e}")
+                logger.error(f"Package list error: {e}")
                 return {"status": "error", "message": str(e)}
         
         return {"packages": [], "mode": "simulation"}
@@ -183,15 +183,15 @@ class PfSenseAgent(OPNsenseAgent):
         Args:
             package_name: Nom du package à installer
         """
-        logger.info(f"[pfSense] Installation package: {package_name}")
+        logger.info(f"[pfSense] Installing package: {package_name}")
         
         if self._api_client:
             try:
                 response = await self._api_client.install_package(package_name)
-                logger.info(f"✓ Package {package_name} installé")
+                logger.info(f"✓ Package {package_name} installed")
                 return response
             except Exception as e:
-                logger.error(f"Erreur installation package: {e}")
+                logger.error(f"Package installation error: {e}")
                 return {"status": "error", "message": str(e)}
         
         return {
@@ -216,7 +216,7 @@ class PfSenseAgent(OPNsenseAgent):
             "install_package": self._install_package,
         })
         
-        logger.info(f"Agent pfSense: {len(functions)} fonctions enregistrées (40 OPNsense + 3 pfSense)")
+        logger.info(f"Agent pfSense: {len(functions)} functions registered (40 OPNsense + 3 pfSense)")
         
         return functions
 

@@ -89,7 +89,7 @@ class CoordinatorLLM:
             self._anthropic = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
             logger.info("CoordinatorLLM: Anthropic backend (model=%s)", ANTHROPIC_MODEL)
         except ImportError:
-            raise RuntimeError("Package 'anthropic' manquant. Faites : pip install anthropic")
+            raise RuntimeError("Package 'anthropic' missing. Run: pip install anthropic")
 
     def _init_openai_client(self) -> None:
         self._http = httpx.AsyncClient(
@@ -148,7 +148,7 @@ class CoordinatorLLM:
                 else:
                     logger.error("vLLM init failed after %d attempts: %s", max_attempts, exc)
                     raise RuntimeError(
-                        f"Impossible d'initialiser vLLM pour le coordinateur : {exc}"
+                        f"Cannot initialize vLLM for the coordinator: {exc}"
                     ) from exc
 
     # ------------------------------------------------------------------

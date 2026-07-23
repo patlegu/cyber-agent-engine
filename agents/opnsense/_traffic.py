@@ -21,12 +21,12 @@ class TrafficShaperMixin:
 
         Utile pour monitorer l'utilisation des limitations de débit configurées.
         """
-        logger.info("[OPNsense] Statistiques traffic shaping")
+        logger.info("[OPNsense] Traffic shaping statistics")
         if self._api_client:
             try:
                 return await self._api_client.get_traffic_statistics()
             except Exception as e:
-                logger.error(f"Erreur stats trafic: {e}")
+                logger.error(f"Traffic stats error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"pipes": [], "queues": [], "mode": "simulation"}
 
@@ -35,12 +35,12 @@ class TrafficShaperMixin:
 
         Un pipe définit une limite de débit maximale (ex: 10 Mbit/s).
         """
-        logger.info("[OPNsense] Liste des pipes traffic shaping")
+        logger.info("[OPNsense] Listing traffic shaping pipes")
         if self._api_client:
             try:
                 return await self._api_client.list_traffic_pipes()
             except Exception as e:
-                logger.error(f"Erreur liste pipes: {e}")
+                logger.error(f"Pipe list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"pipes": [], "mode": "simulation"}
 
@@ -57,7 +57,7 @@ class TrafficShaperMixin:
         :param bandwidth: Valeur numérique de la limite de bande passante.
         :param bandwidth_metric: Unité : 'Kbit', 'Mbit' (défaut) ou 'Gbit'.
         """
-        logger.info(f"[OPNsense] Création pipe: {description} {bandwidth} {bandwidth_metric}")
+        logger.info(f"[OPNsense] Creating pipe: {description} {bandwidth} {bandwidth_metric}")
         if self._api_client:
             try:
                 response = await self._api_client.add_traffic_pipe(
@@ -67,10 +67,10 @@ class TrafficShaperMixin:
                 )
                 if response.get("uuid"):
                     await self._api_client.apply_traffic_changes()
-                    logger.info(f"✓ Pipe '{description}' créé")
+                    logger.info(f"✓ Pipe '{description}' created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création pipe: {e}")
+                logger.error(f"Pipe creation error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "created", "description": description, "mode": "simulation"}
 
@@ -80,14 +80,14 @@ class TrafficShaperMixin:
 
         :param uuid: UUID du pipe à supprimer.
         """
-        logger.info(f"[OPNsense] Suppression pipe: {uuid}")
+        logger.info(f"[OPNsense] Removing pipe: {uuid}")
         if self._api_client:
             try:
                 response = await self._api_client.del_traffic_pipe(uuid)
                 await self._api_client.apply_traffic_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression pipe: {e}")
+                logger.error(f"Pipe removal error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
 
@@ -96,12 +96,12 @@ class TrafficShaperMixin:
 
         Une queue appartient à un pipe et définit une priorité relative.
         """
-        logger.info("[OPNsense] Liste des queues traffic shaping")
+        logger.info("[OPNsense] Listing traffic shaping queues")
         if self._api_client:
             try:
                 return await self._api_client.list_traffic_queues()
             except Exception as e:
-                logger.error(f"Erreur liste queues: {e}")
+                logger.error(f"Queue list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"queues": [], "mode": "simulation"}
 
@@ -118,7 +118,7 @@ class TrafficShaperMixin:
         :param pipe: UUID du pipe parent auquel rattacher cette queue.
         :param weight: Poids relatif de la queue (1-100, plus élevé = plus prioritaire).
         """
-        logger.info(f"[OPNsense] Création queue: {description} → pipe {pipe}")
+        logger.info(f"[OPNsense] Creating queue: {description} → pipe {pipe}")
         if self._api_client:
             try:
                 response = await self._api_client.add_traffic_queue(
@@ -128,10 +128,10 @@ class TrafficShaperMixin:
                 )
                 if response.get("uuid"):
                     await self._api_client.apply_traffic_changes()
-                    logger.info(f"✓ Queue '{description}' créée")
+                    logger.info(f"✓ Queue '{description}' created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création queue: {e}")
+                logger.error(f"Queue creation error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "created", "description": description, "mode": "simulation"}
 
@@ -141,14 +141,14 @@ class TrafficShaperMixin:
 
         :param uuid: UUID de la queue à supprimer.
         """
-        logger.info(f"[OPNsense] Suppression queue: {uuid}")
+        logger.info(f"[OPNsense] Removing queue: {uuid}")
         if self._api_client:
             try:
                 response = await self._api_client.del_traffic_queue(uuid)
                 await self._api_client.apply_traffic_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression queue: {e}")
+                logger.error(f"Queue removal error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
 
@@ -157,12 +157,12 @@ class TrafficShaperMixin:
 
         Ces règles définissent quel trafic (IP/port/protocole) va dans quel pipe.
         """
-        logger.info("[OPNsense] Liste des règles traffic shaping")
+        logger.info("[OPNsense] Listing traffic shaping rules")
         if self._api_client:
             try:
                 return await self._api_client.list_traffic_rules()
             except Exception as e:
-                logger.error(f"Erreur liste règles trafic: {e}")
+                logger.error(f"Traffic rule list error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"rules": [], "mode": "simulation"}
 
@@ -183,7 +183,7 @@ class TrafficShaperMixin:
         :param source: Adresse/réseau source (ex: '192.168.1.0/24' ou 'any').
         :param destination: Adresse/réseau destination (ex: 'any').
         """
-        logger.info(f"[OPNsense] Création règle trafic: {description} → {target}")
+        logger.info(f"[OPNsense] Creating traffic rule: {description} → {target}")
         if self._api_client:
             try:
                 response = await self._api_client.add_traffic_rule(
@@ -195,10 +195,10 @@ class TrafficShaperMixin:
                 )
                 if response.get("uuid"):
                     await self._api_client.apply_traffic_changes()
-                    logger.info(f"✓ Règle trafic '{description}' créée")
+                    logger.info(f"✓ Traffic rule '{description}' created")
                 return response
             except Exception as e:
-                logger.error(f"Erreur création règle trafic: {e}")
+                logger.error(f"Traffic rule creation error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "created", "description": description, "mode": "simulation"}
 
@@ -208,24 +208,24 @@ class TrafficShaperMixin:
 
         :param uuid: UUID de la règle à supprimer.
         """
-        logger.info(f"[OPNsense] Suppression règle trafic: {uuid}")
+        logger.info(f"[OPNsense] Removing traffic rule: {uuid}")
         if self._api_client:
             try:
                 response = await self._api_client.del_traffic_rule(uuid)
                 await self._api_client.apply_traffic_changes()
                 return response
             except Exception as e:
-                logger.error(f"Erreur suppression règle trafic: {e}")
+                logger.error(f"Traffic rule removal error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "deleted", "uuid": uuid, "mode": "simulation"}
 
     async def _apply_traffic_changes(self) -> Dict:
         """Applique et active toutes les modifications de traffic shaping en attente."""
-        logger.info("[OPNsense] Application traffic shaping")
+        logger.info("[OPNsense] Applying traffic shaping")
         if self._api_client:
             try:
                 return await self._api_client.apply_traffic_changes()
             except Exception as e:
-                logger.error(f"Erreur application traffic: {e}")
+                logger.error(f"Traffic apply error: {e}")
                 return {"status": "error", "message": str(e)}
         return {"status": "applied", "mode": "simulation"}

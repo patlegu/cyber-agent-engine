@@ -116,14 +116,14 @@ class AnonyAgent(ToolAgent):
         spacy_model = anonyner or "en_core_web_md"
         if not anonyner:
             logger.warning(
-                "AnonyNER introuvable (package '%s' ni répertoire '%s') — "
-                "fallback en_core_web_md. "
-                "Installer avec : pip install dist/en_anonyner-*.tar.gz",
+                "AnonyNER not found (package '%s' nor directory '%s') — "
+                "falling back to en_core_web_md. "
+                "Install with: pip install dist/en_anonyner-*.tar.gz",
                 _ANONYNER_PACKAGE,
                 _ANONYNER_MODEL_PATH,
             )
         else:
-            logger.debug("AnonyNER résolu : %s", spacy_model)
+            logger.debug("AnonyNER resolved: %s", spacy_model)
 
         return {
             "spacy_model": spacy_model,
@@ -184,13 +184,13 @@ class AnonyAgent(ToolAgent):
         try:
             with open(resolved, encoding="utf-8") as f:
                 rules = json.load(f)
-            logger.info("custom_rules chargées depuis %s (%d règles)", resolved, len(rules))
+            logger.info("custom_rules loaded from %s (%d rules)", resolved, len(rules))
             return rules
         except FileNotFoundError:
-            logger.debug("custom_rules_security.json introuvable (%s) — désactivées", resolved)
+            logger.debug("custom_rules_security.json not found (%s) — disabled", resolved)
             return None
         except Exception as e:
-            logger.warning("Erreur chargement custom_rules: %s", e)
+            logger.warning("Error loading custom_rules: %s", e)
             return None
 
     def _get_engine(self):
@@ -200,7 +200,7 @@ class AnonyAgent(ToolAgent):
                 from anonyfiles_core.anonymizer.engine import AnonyfilesEngine
             except ImportError as exc:
                 raise RuntimeError(
-                    "anonyfiles_core non installé.\n"
+                    "anonyfiles_core not installed.\n"
                     "  Dev  : pip install -e /srv/anonyfiles\n"
                     "  Prod : pip install 'anonyfiles_core @ git+https://github.com/patlegu/anonyfiles.git@main'"
                 ) from exc
@@ -211,10 +211,10 @@ class AnonyAgent(ToolAgent):
             )
             extra = self.config.get("extra_labels", [])
             logger.info(
-                "AnonyfilesEngine initialisé (spaCy: %s, labels_cyber: %d, custom_rules: %s)",
+                "AnonyfilesEngine initialized (spaCy: %s, labels_cyber: %d, custom_rules: %s)",
                 self.config.get("spacy_model"),
                 len(extra),
-                "oui" if self._custom_rules else "non",
+                "yes" if self._custom_rules else "no",
             )
         return self._engine
 
@@ -232,11 +232,11 @@ class AnonyAgent(ToolAgent):
                     # Path("en_anonyner") → spacy.load("en_anonyner") ✓
                     # Path("/srv/.../model-best") → spacy.load("/srv/...") ✓
                     self._ner = NERExtractor(model_path=Path(anonyner))
-                    logger.debug("NERExtractor initialisé (modèle : %s)", anonyner)
+                    logger.debug("NERExtractor initialized (model: %s)", anonyner)
                 else:
-                    logger.debug("NERExtractor désactivé — AnonyNER introuvable")
+                    logger.debug("NERExtractor disabled — AnonyNER not found")
             except ImportError:
-                logger.debug("NERExtractor non importable — désactivé")
+                logger.debug("NERExtractor not importable — disabled")
             self._ner_ready = True
         return self._ner
 
@@ -292,7 +292,7 @@ class AnonyAgent(ToolAgent):
                 for val in vals:
                     if val and val not in self._session_mapping:
                         logger.debug(
-                            "NER gap : '%s' (%s) détecté mais non anonymisé par le moteur",
+                            "NER gap: '%s' (%s) detected but not anonymized by the engine",
                             val, label,
                         )
 
@@ -352,7 +352,7 @@ class AnonyAgent(ToolAgent):
                             if val not in lst:
                                 lst.append(val)
                                 logger.debug(
-                                    "NER gap batch : '%s' (%s) non anonymisé par le moteur",
+                                    "NER gap batch: '%s' (%s) not anonymized by the engine",
                                     val, label,
                                 )
 
@@ -393,7 +393,7 @@ class AnonyAgent(ToolAgent):
         self._session_mapping.clear()
         if self._engine is not None:
             self._engine.reset_state()
-        return {"status": "ok", "message": "Session réinitialisée"}
+        return {"status": "ok", "message": "Session reset"}
 
     # ------------------------------------------------------------------
     # Helpers internes
@@ -420,8 +420,8 @@ class AnonyAgent(ToolAgent):
                 clean[original] = token
         if corrupted:
             logger.warning(
-                "Entrées corrompues filtrées du mapping "
-                "(bug engine : NER sur texte post-custom_rules) : %s",
+                "Corrupted entries filtered from mapping "
+                "(engine bug: NER on post-custom_rules text): %s",
                 corrupted,
             )
         return clean

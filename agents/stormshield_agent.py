@@ -49,7 +49,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _block_ip(self, ip: str, reason: str = "Security threat") -> Dict:
         """Bloque une adresse IP sur le firewall."""
-        logger.info(f"[Stormshield] Blocage IP: {ip} (raison: {reason})")
+        logger.info(f"[Stormshield] Blocking IP: {ip} (reason: {reason})")
 
         # TODO: Appel API réel Stormshield
         # POST /api/host/policy/filter
@@ -62,7 +62,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _unblock_ip(self, ip: str) -> Dict:
         """Débloque une adresse IP."""
-        logger.info(f"[Stormshield] Déblocage IP: {ip}")
+        logger.info(f"[Stormshield] Unblocking IP: {ip}")
 
         # TODO: Appel API réel
         return {
@@ -80,7 +80,7 @@ class StormshieldAgent(ToolAgent):
         action: str = "block"
     ) -> Dict:
         """Crée une règle de filtrage."""
-        logger.info(f"[Stormshield] Création règle: {name}")
+        logger.info(f"[Stormshield] Creating rule: {name}")
 
         # TODO: Appel API réel
         return {
@@ -92,7 +92,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _delete_filter_rule(self, rule_id: str) -> Dict:
         """Supprime une règle de filtrage."""
-        logger.info(f"[Stormshield] Suppression règle: {rule_id}")
+        logger.info(f"[Stormshield] Deleting rule: {rule_id}")
 
         # TODO: Appel API réel
         return {
@@ -102,7 +102,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _get_active_connections(self, limit: int = 100) -> Dict:
         """Récupère les connexions actives."""
-        logger.info(f"[Stormshield] Consultation connexions actives (limit: {limit})")
+        logger.info(f"[Stormshield] Fetching active connections (limit: {limit})")
 
         # TODO: Appel API réel
         return {
@@ -120,7 +120,7 @@ class StormshieldAgent(ToolAgent):
         type: str = "host"
     ) -> Dict:
         """Crée un objet réseau."""
-        logger.info(f"[Stormshield] Création objet réseau: {name}")
+        logger.info(f"[Stormshield] Creating network object: {name}")
 
         # TODO: Appel API réel
         return {
@@ -133,7 +133,7 @@ class StormshieldAgent(ToolAgent):
 
     async def _delete_network_object(self, object_id: str) -> Dict:
         """Supprime un objet réseau."""
-        logger.info(f"[Stormshield] Suppression objet: {object_id}")
+        logger.info(f"[Stormshield] Removing object: {object_id}")
 
         # TODO: Appel API réel
         return {

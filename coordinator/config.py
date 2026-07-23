@@ -80,7 +80,7 @@ def load_config(env: Mapping[str, str]) -> CoordinatorConfig:
 
     policy_file = env.get("COORDINATOR_POLICY_FILE", "")
     if not policy_file:
-        raise ConfigError("COORDINATOR_POLICY_FILE absent : chemin du policy.yml requis")
+        raise ConfigError("COORDINATOR_POLICY_FILE missing: path to policy.yml required")
 
     return CoordinatorConfig(
         auth_secret=auth_secret,

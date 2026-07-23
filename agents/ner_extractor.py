@@ -57,14 +57,14 @@ class NERExtractor:
         try:
             import spacy
             self._nlp = spacy.load(str(self._model_path))
-            logger.info("AnonyNER chargé depuis %s", self._model_path)
+            logger.info("AnonyNER loaded from %s", self._model_path)
             return True
         except ImportError:
-            logger.warning("spaCy non disponible — NERExtractor désactivé")
+            logger.warning("spaCy not available — NERExtractor disabled")
             return False
         except OSError:
             logger.warning(
-                "Modèle AnonyNER introuvable : %s — NERExtractor désactivé",
+                "AnonyNER model not found: %s — NERExtractor disabled",
                 self._model_path,
             )
             return False

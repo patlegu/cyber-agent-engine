@@ -132,7 +132,7 @@ class WireGuardAgent(ToolAgent):
         # Initialiser le client approprié
         if platform == "opnsense":
             if not self.api_config and not self.simulation_mode:
-                raise ValueError("Configuration requise pour OPNsense")
+                raise ValueError("Configuration required for OPNsense")
             
             if self.api_config:
                 self.client = WireGuardAPIClient(
@@ -149,9 +149,9 @@ class WireGuardAgent(ToolAgent):
                 config_dir=self.api_config.get('config_dir', '/etc/wireguard')
             )
         else:
-            raise ValueError(f"Plateforme non supportée: {platform}")
-        
-        logger.info(f"Agent WireGuard initialisé (platform: {platform}, simulation: {simulation_mode})")
+            raise ValueError(f"Unsupported platform: {platform}")
+
+        logger.info(f"WireGuard agent initialized (platform: {platform}, simulation: {simulation_mode})")
 
     def _register_functions(self) -> Dict[str, callable]:
         """Enregistre les fonctions disponibles pour WireGuard."""
@@ -205,7 +205,7 @@ class WireGuardAgent(ToolAgent):
         Returns:
             Configuration complète du tunnel
         """
-        logger.info(f"Création tunnel Site-to-Site: {site_a['name']} ↔ {site_b['name']}")
+        logger.info(f"Creating Site-to-Site tunnel: {site_a['name']} ↔ {site_b['name']}")
         
         if self.simulation_mode:
             return await self._simulate_site_to_site(site_a, site_b, tunnel_network)
@@ -239,7 +239,7 @@ class WireGuardAgent(ToolAgent):
                 site_a, site_b, keys_a, keys_b, ip_a, ip_b, listen_port, psk
             )
         
-        logger.info(f"✓ Tunnel Site-to-Site créé: {site_a['name']} ↔ {site_b['name']}")
+        logger.info(f"✓ Site-to-Site tunnel created: {site_a['name']} ↔ {site_b['name']}")
         return tunnel
 
     async def _create_site_to_site_opnsense(
@@ -405,7 +405,7 @@ class WireGuardAgent(ToolAgent):
         Returns:
             Configuration du tunnel
         """
-        logger.info(f"Création tunnel Point-to-Point: {local_ip} ↔ {remote_ip}")
+        logger.info(f"Creating Point-to-Point tunnel: {local_ip} ↔ {remote_ip}")
         
         if self.simulation_mode:
             return {"type": "point_to_point", "status": "simulated"}
@@ -467,7 +467,7 @@ class WireGuardAgent(ToolAgent):
             }
         
         # TODO: Implémenter pour OPNsense
-        raise NotImplementedError("Point-to-Point non encore implémenté pour OPNsense")
+        raise NotImplementedError("Point-to-Point not yet implemented for OPNsense")
 
     # ========================================================================
     # Création de Tunnels - Mesh Network
@@ -499,7 +499,7 @@ class WireGuardAgent(ToolAgent):
         Returns:
             Configuration complète du mesh
         """
-        logger.info(f"Création réseau mesh avec {len(nodes)} nœuds")
+        logger.info(f"Creating mesh network with {len(nodes)} nodes")
         
         if self.simulation_mode:
             return {"type": "mesh", "nodes": len(nodes), "status": "simulated"}
@@ -567,7 +567,7 @@ class WireGuardAgent(ToolAgent):
                 "peers": len(nodes) - 1
             })
         
-        logger.info(f"✓ Réseau mesh créé avec {len(nodes)} nœuds")
+        logger.info(f"✓ Mesh network created with {len(nodes)} nodes")
         return mesh_config
 
     # ========================================================================
@@ -600,7 +600,7 @@ class WireGuardAgent(ToolAgent):
             Résultat de la vérification
         """
         # TODO: Implémenter vérification routage
-        logger.info("Vérification du routage...")
+        logger.info("Checking routing...")
         return {"status": "ok", "routes": []}
 
     async def rotate_keys(self, interface: str) -> Dict:
@@ -613,7 +613,7 @@ class WireGuardAgent(ToolAgent):
         Returns:
             Nouvelles clés générées
         """
-        logger.info(f"Rotation des clés pour {interface}")
+        logger.info(f"Rotating keys for {interface}")
         
         # Générer nouvelles clés
         new_keys = await getattr(self.client, 'generate_keypair' if self.platform == "linux" else 'generate_wireguard_keypair')()
