@@ -19,13 +19,13 @@ from pydantic import BaseModel, ConfigDict
 from coordinator.agent_call import AgentCall
 from coordinator.proposer import Finish, Proposal, ProposerError
 from coordinator.session import Clock, SessionState, SessionStore
-from core.approval.store import ApprovalStore
+from core.approval.store import ApprovalMismatch, ApprovalNotFound, ApprovalStore
 from core.audit.sink import AuditSink, entry_from_verdict
 from core.decision import decide
 from core.execution.authorization import NotAuthorized, grant, grant_approved
 from core.execution.boundary import execute
 from core.policy.catalog import CapabilityCatalog
-from core.policy.models import Rule, Verdict
+from core.policy.models import Intention, Rule, Verdict
 from core.tokens.vault import ExtractFn, Vault, tokenize
 
 
@@ -42,6 +42,11 @@ class Completed(BaseModel):
 class Suspended(BaseModel):
     model_config = ConfigDict(extra="forbid")
     approval_id: str
+    # Hash canonique de l'intention : l'appelant doit le renvoyer tel quel pour
+    # approuver (confirmation anti-tamper — on n'approuve QUE ce qui a été montré).
+    intention_hash: str
+    # Intention tokenisée (capacité + args sur jetons) : ce que l'humain approuve.
+    intention: Intention
 
 
 class Denied(BaseModel):
@@ -94,6 +99,25 @@ class GatedLoop:
         vault = Vault()
         request_tokens = tokenize(request_text, vault, self._extract)
         return await self._run(vault, request_tokens, history=[], step=0, results=[])
+
+    async def approve(self, approval_id: str, provided_hash: str) -> LoopResult:
+        """Approuve une action en attente puis l'exécute.
+
+        `provided_hash` DOIT égaler le `intention_hash` renvoyé au moment du
+        `pending_approval` : confirmation anti-tamper (on approuve exactement
+        l'intention montrée, pas une autre substituée entre-temps). Marque
+        l'approbation `approved` puis délègue à `resume` pour l'exécution.
+        """
+        approval = self._approvals.get(approval_id)
+        if approval is None:
+            return Failed(reason="unknown approval")
+        try:
+            self._approvals.approve(approval_id, provided_hash)
+        except ApprovalMismatch:
+            return Denied(reason="intention hash mismatch")
+        except ApprovalNotFound:
+            return Failed(reason="unknown approval")
+        return await self.resume(approval_id)
 
     async def resume(self, approval_id: str) -> LoopResult:
         """Reprend une boucle suspendue après décision humaine sur l'approbation."""
@@ -180,14 +204,18 @@ class GatedLoop:
                 return Denied(reason=f"policy: {intention.capability}")
             if verdict.effect == "approve":
                 sid = self._new_id()
-                self._approvals.create(intention, approval_id=sid)
+                approval = self._approvals.create(intention, approval_id=sid)
                 self._sessions.save(SessionState(
                     id=sid, request_tokens=request_tokens, vault_snapshot=vault.snapshot(),
                     history=history, step=step, expires_at=self._clock() + self._ttl,
                     results=results,
                     rule_reason=(verdict.matched_rule.reason if verdict.matched_rule else None),
                 ))
-                return Suspended(approval_id=sid)
+                return Suspended(
+                    approval_id=sid,
+                    intention_hash=approval.intention_hash,
+                    intention=intention,
+                )
             try:
                 result = await execute(grant(verdict), vault, self._call)
             except Exception as exc:  # frontière d'exécution : jamais de 500 non géré

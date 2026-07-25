@@ -36,11 +36,22 @@ class ExecuteRequest(BaseModel):
     request: str
 
 
+class ApproveRequest(BaseModel):
+    # Hash d'intention renvoyé au pending_approval : rejoué ici pour prouver que
+    # l'on approuve exactement l'intention montrée (confirmation anti-tamper).
+    intention_hash: str
+
+
 def _serialize(result: LoopResult) -> dict[str, Any]:
     if isinstance(result, Completed):
         return {"status": "completed", "summary": result.summary, "results": result.results}
     if isinstance(result, Suspended):
-        return {"status": "pending_approval", "approval_id": result.approval_id}
+        return {
+            "status": "pending_approval",
+            "approval_id": result.approval_id,
+            "intention_hash": result.intention_hash,
+            "intention": result.intention.model_dump(),
+        }
     if isinstance(result, Denied):
         return {"status": "denied", "reason": result.reason}
     if isinstance(result, Failed):
@@ -66,6 +77,14 @@ def _register_routes(app: FastAPI, auth_secret: str) -> None:
     @app.post("/coordinator/execute", dependencies=[Depends(require_auth)])
     async def execute(req: ExecuteRequest, request: Request) -> dict[str, Any]:
         return _serialize(await request.app.state.loop.handle(req.request))
+
+    @app.post("/coordinator/approve/{approval_id}", dependencies=[Depends(require_auth)])
+    async def approve(
+        approval_id: str, body: ApproveRequest, request: Request
+    ) -> dict[str, Any]:
+        return _serialize(
+            await request.app.state.loop.approve(approval_id, body.intention_hash)
+        )
 
     @app.post("/coordinator/resume/{approval_id}", dependencies=[Depends(require_auth)])
     async def resume(approval_id: str, request: Request) -> dict[str, Any]:

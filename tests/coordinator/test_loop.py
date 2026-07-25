@@ -90,6 +90,34 @@ async def test_approve_suspends_then_resume_completes():
 
 
 @pytest.mark.asyncio
+async def test_approve_expose_le_hash_et_execute_sur_bon_hash():
+    # Le suspend expose intention_hash + intention (l'humain approuve ce qu'il voit) ;
+    # loop.approve(id, hash) approuve puis exécute. Un mauvais hash refuse (anti-tamper)
+    # sans consommer l'approbation.
+    proposer = _ScriptedProposer([
+        Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"})),
+        Finish(summary="banni"),
+    ])
+    policy = [Rule(match=Match(capability="crowdsec.ban_ip"), effect="approve")]
+    loop = _loop(proposer, policy)
+    res = await loop.handle("banni 203.0.113.9")
+    assert isinstance(res, Suspended)
+    assert res.intention_hash
+    assert res.intention.capability == "crowdsec.ban_ip"
+    denied = await loop.approve(res.approval_id, "hash-bidon")
+    assert isinstance(denied, Denied)
+    done = await loop.approve(res.approval_id, res.intention_hash)
+    assert isinstance(done, Completed)
+
+
+@pytest.mark.asyncio
+async def test_approve_inconnu_est_failed():
+    loop = _loop(_ScriptedProposer([]), [])
+    res = await loop.approve("appr-inexistant", "x")
+    assert isinstance(res, Failed)
+
+
+@pytest.mark.asyncio
 async def test_resume_expired_session_fails():
     proposer = _ScriptedProposer(
         [Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"}))]
