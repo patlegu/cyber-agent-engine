@@ -45,6 +45,7 @@ dev = [
     "pytest-cov>=4,<7",
     "ruff>=0.6,<1",
     "mypy>=1.11,<2",
+    "types-PyYAML>=6,<7",
 ]
 
 [project.urls]
