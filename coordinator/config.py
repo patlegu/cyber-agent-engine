@@ -37,6 +37,7 @@ class CoordinatorConfig:
     agent_servers: list[str]
     audit_max_bytes: int
     audit_backups: int
+    max_steps: int
 
 
 def _parse_agent_servers(env: Mapping[str, str]) -> list[str]:
@@ -96,4 +97,5 @@ def load_config(env: Mapping[str, str]) -> CoordinatorConfig:
         agent_servers=_parse_agent_servers(env),
         audit_max_bytes=int(env.get("COORDINATOR_AUDIT_MAX_BYTES", "104857600")),
         audit_backups=int(env.get("COORDINATOR_AUDIT_BACKUPS", "5")),
+        max_steps=int(env.get("COORDINATOR_MAX_STEPS", "10")),
     )

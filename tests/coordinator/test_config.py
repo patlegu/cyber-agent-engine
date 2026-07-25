@@ -29,6 +29,16 @@ def _base_env(**over: str) -> dict[str, str]:
     return env
 
 
+def test_max_steps_default_10() -> None:
+    """max_steps par défaut à 10 (comportement historique)."""
+    assert load_config(_base_env()).max_steps == 10
+
+
+def test_max_steps_override_from_env() -> None:
+    """COORDINATOR_MAX_STEPS borne le nombre d'actions par tour (1 = une action)."""
+    assert load_config(_base_env(COORDINATOR_MAX_STEPS="1")).max_steps == 1
+
+
 def test_loads_with_defaults() -> None:
     """Charge la config avec les valeurs par défaut."""
     cfg = load_config(_base_env())

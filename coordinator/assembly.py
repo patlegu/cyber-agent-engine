@@ -87,4 +87,5 @@ async def assemble_loop(
         extract=build_regex_extractor(),
         clock=time.time,
         id_factory=lambda: uuid4().hex,
+        max_steps=config.max_steps,
     )

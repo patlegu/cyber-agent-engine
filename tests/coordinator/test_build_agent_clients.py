@@ -11,7 +11,7 @@ def _cfg(*, agent_servers, sock="") -> CoordinatorConfig:
         auth_secret="s", session_key=Fernet.generate_key(), policy_file=Path("/tmp/p.yml"),
         audit_file=Path("/tmp/a.jsonl"), session_dir=Path("/tmp/s"), host="127.0.0.1", port=8080,
         agent_server_url=agent_servers[0], agent_server_sock=sock, agent_server_key="k",
-        agent_servers=agent_servers, audit_max_bytes=0, audit_backups=0,
+        agent_servers=agent_servers, audit_max_bytes=0, audit_backups=0, max_steps=10,
     )
 
 

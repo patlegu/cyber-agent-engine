@@ -57,7 +57,7 @@ def _cfg(tmp_path: Path) -> CoordinatorConfig:
         auth_secret="s", session_key=Fernet.generate_key(), policy_file=pol,
         audit_file=tmp_path / "a.jsonl", session_dir=tmp_path / "s", host="127.0.0.1", port=8080,
         agent_server_url="http://x", agent_server_sock="", agent_server_key="",
-        agent_servers=["http://x"], audit_max_bytes=0, audit_backups=0)
+        agent_servers=["http://x"], audit_max_bytes=0, audit_backups=0, max_steps=10)
 
 
 @pytest.mark.asyncio
