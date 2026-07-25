@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # Image bi-rôle (serveur d'agents OU coordinateur) — CPU, non-root.
 # La commande réelle est fournie par docker-compose. GPU : override documenté.
 
