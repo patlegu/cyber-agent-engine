@@ -25,7 +25,7 @@ class _ScriptedProposer:
     def __init__(self, proposals):
         self._it = iter(proposals)
 
-    async def propose(self, request_tokens, history):
+    async def propose(self, request_tokens, history, *, context=""):
         return next(self._it)
 
 
@@ -186,7 +186,7 @@ async def test_llm_never_sees_real_ip():
     seen = []
 
     class _Spy:
-        async def propose(self, request_tokens, history):
+        async def propose(self, request_tokens, history, *, context=""):
             seen.append((request_tokens, tuple(history)))
             if len(seen) == 1:
                 return Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"}))
@@ -225,7 +225,7 @@ async def test_retokenize_uses_vault_even_when_extractor_misses_it():
     seen_history: list[list[str]] = []
 
     class _Spy:
-        async def propose(self, request_tokens, history):
+        async def propose(self, request_tokens, history, *, context=""):
             seen_history.append(list(history))
             if len(seen_history) == 1:
                 return Act(intention=Intention(capability="crowdsec.ban_ip", args={"ip": "IP_1"}))
@@ -256,7 +256,7 @@ async def test_proposer_error_returns_failed_not_raised():
     valide dans le budget d'essais) doit se traduire par un `Failed` terminal, pas
     par une exception non gérée remontant jusqu'à un 500 côté app."""
     class _ExplodingProposer:
-        async def propose(self, request_tokens, history):
+        async def propose(self, request_tokens, history, *, context=""):
             raise ProposerError("budget d'essais épuisé")
 
     res = await _loop(_ExplodingProposer(), []).handle("x")

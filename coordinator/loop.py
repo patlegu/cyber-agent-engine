@@ -30,7 +30,9 @@ from core.tokens.vault import ExtractFn, Vault, tokenize
 
 
 class ProposerLike(Protocol):
-    async def propose(self, request_tokens: str, history: list[str]) -> Proposal: ...
+    async def propose(
+        self, request_tokens: str, history: list[str], *, context: str = ""
+    ) -> Proposal: ...
 
 
 class Completed(BaseModel):
@@ -165,6 +167,36 @@ class GatedLoop:
         self._sink.write(entry_from_verdict(verdict, event="rejected", rule_reason=rule_reason))
         return Denied(reason="rejected by the operator")
 
+    def _legend(self, vault: Vault) -> str:
+        """Construit la légende jeton→nature transmise (indicative) au proposeur.
+
+        Une ligne par jeton ayant une meta connue (``"<jeton> = <IPv4|IPv6> <scope>"``),
+        jointes par ``" ; "``. La famille (IPv4/IPv6) est dérivée de la valeur réelle via
+        ``vault.resolve`` UNIQUEMENT pour distinguer le format — la valeur elle-même
+        n'apparaît jamais dans la légende (zéro-secret). Vide si le vault n'a aucune
+        meta (comportement historique inchangé).
+        """
+        lines = []
+        for token, meta in vault.meta_items().items():
+            scope = meta.get("scope")
+            if scope:
+                fam = "IPv6" if ":" in (vault.resolve(token) or "") else "IPv4"
+                lines.append(f"{token} = {fam} {scope}")
+        return " ; ".join(lines)
+
+    def _arg_meta(self, intention: Intention, vault: Vault) -> dict[str, dict[str, str]]:
+        """Construit `arg_meta` pour `decide` : pour chaque arg dont le jeton a une meta
+        connue du vault, associe cette meta (ex. `{"ip": {"scope": "private"}}`).
+        `decide` s'en sert pour matcher des pseudo-args de politique (`ip__scope`)
+        SANS jamais faire fuiter cette clé synthétique vers l'intention exécutée.
+        """
+        out: dict[str, dict[str, str]] = {}
+        for arg, tok in intention.args.items():
+            meta = vault.meta(tok)
+            if meta:
+                out[arg] = meta
+        return out
+
     def _retokenize(self, result: dict[str, Any], vault: Vault) -> str:
         """Jetonise le résultat : d'abord les valeurs déjà connues du vault (déterministe,
         indépendant de l'extracteur), puis les entités nouvelles via l'extracteur.
@@ -191,14 +223,17 @@ class GatedLoop:
         """Boucle proposer → décider → (suspendre | exécuter) jusqu'à `Finish` ou la limite."""
         while step < self._max_steps:
             try:
-                proposal: Proposal = await self._proposer.propose(request_tokens, history)
+                proposal: Proposal = await self._proposer.propose(
+                    request_tokens, history, context=self._legend(vault)
+                )
             except ProposerError as exc:
                 return Failed(reason=f"proposer: {type(exc).__name__}")
             if isinstance(proposal, Finish):
                 return Completed(summary=proposal.summary, results=results)
             intention = proposal.intention
             verdict = decide(
-                intention, catalog=self._catalog, policy=self._policy, sink=self._sink
+                intention, catalog=self._catalog, policy=self._policy, sink=self._sink,
+                arg_meta=self._arg_meta(intention, vault),
             )
             if verdict.effect == "deny":
                 return Denied(reason=f"policy: {intention.capability}")

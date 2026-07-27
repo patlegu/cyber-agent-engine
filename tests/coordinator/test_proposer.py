@@ -61,3 +61,36 @@ async def test_exhausts_retries():
     p = LlmProposer(llm=llm, catalog=_catalog(), max_retries=2)
     with pytest.raises(ProposerError):
         await p.propose("x", [])
+
+
+class _CaptureLLM:
+    """LLM factice qui capture les messages envoyés, pour inspecter le prompt construit."""
+
+    def __init__(self, reply):
+        self._reply = reply
+        self.last = None
+
+    async def chat(self, messages, max_tokens=1024):
+        self.last = messages
+        return self._reply
+
+
+@pytest.mark.asyncio
+async def test_context_legend_injected():
+    reply = json.dumps({"action": {"capability": "crowdsec.ban_ip", "args": {"ip": "IP_1"}}})
+    llm = _CaptureLLM(reply)
+    p = LlmProposer(llm=llm, catalog=_catalog())
+    await p.propose("banni IP_1", [], context="IP_1 = IPv4 public")
+    blob = " ".join(m["content"] for m in llm.last)
+    assert "IP_1 = IPv4 public" in blob
+    assert "Contexte des jetons" in blob
+
+
+@pytest.mark.asyncio
+async def test_no_context_unchanged():
+    reply = json.dumps({"action": {"capability": "crowdsec.ban_ip", "args": {"ip": "IP_1"}}})
+    llm = _CaptureLLM(reply)
+    p = LlmProposer(llm=llm, catalog=_catalog())
+    await p.propose("banni IP_1", [])
+    blob = " ".join(m["content"] for m in llm.last)
+    assert "Contexte des jetons" not in blob

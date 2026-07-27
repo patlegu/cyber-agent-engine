@@ -9,10 +9,42 @@ ou dans la vue d'approbation humaine.
 
 from __future__ import annotations
 
+import ipaddress
 from collections.abc import Callable
 from typing import Any
 
 ExtractFn = Callable[[str], dict[str, list[str]]]
+
+# Labels d'entité pour lesquels on calcule un scope (classe d'IP non-sensible).
+_IP_LABELS = ("IP_ADDRESS", "IP_SUBNET")
+
+
+def classify_ip(value: str) -> str | None:
+    """Classe non-sensible d'une IP ou d'un subnet CIDR (pur, stdlib).
+
+    Retourne une des classes ``"loopback"``, ``"link_local"``, ``"private"``,
+    ``"public"``, ``"reserved"`` — jamais l'adresse elle-même. ``None`` si
+    ``value`` n'est ni une IP ni un réseau CIDR valide. L'ordre des tests
+    importe : loopback et link_local sont AUSSI ``is_private`` en stdlib, donc
+    on teste la classe la plus spécifique en premier.
+    """
+    obj: ipaddress._BaseAddress | ipaddress._BaseNetwork[Any]
+    try:
+        obj = ipaddress.ip_address(value)
+    except ValueError:
+        try:
+            obj = ipaddress.ip_network(value, strict=False)
+        except ValueError:
+            return None
+    if obj.is_loopback:
+        return "loopback"
+    if obj.is_link_local:
+        return "link_local"
+    if obj.is_private:
+        return "private"
+    if obj.is_global:
+        return "public"
+    return "reserved"
 
 
 class Vault:
@@ -22,6 +54,8 @@ class Vault:
         self._to_real: dict[str, str] = {}
         self._to_token: dict[str, str] = {}
         self._counters: dict[str, int] = {}
+        # Meta dérivée par jeton (ex. {"scope": "private"}) — jamais la valeur brute.
+        self._meta: dict[str, dict[str, str]] = {}
 
     def token_for(self, label: str, value: str) -> str:
         existing = self._to_token.get(value)
@@ -31,6 +65,10 @@ class Vault:
         token = f"{label}_{self._counters[label]}"
         self._to_real[token] = value
         self._to_token[value] = token
+        if label in _IP_LABELS and token not in self._meta:
+            scope = classify_ip(value)
+            if scope is not None:
+                self._meta[token] = {"scope": scope}
         return token
 
     def resolve(self, token: str) -> str | None:
@@ -43,17 +81,34 @@ class Vault:
         """Copie de la table jeton→valeur émise dans cette session."""
         return dict(self._to_real)
 
+    def meta(self, token: str) -> dict[str, str]:
+        """Meta dérivée du jeton (ex. ``{"scope": "private"}``) — jamais la valeur brute."""
+        return dict(self._meta.get(token, {}))
+
+    def meta_items(self) -> dict[str, dict[str, str]]:
+        """Copie de la table jeton→meta. Ne contient jamais de valeur réelle."""
+        return {k: dict(v) for k, v in self._meta.items()}
+
     def snapshot(self) -> dict[str, Any]:
         """État sérialisable du vault (pour persistance de session)."""
-        return {"to_real": dict(self._to_real), "counters": dict(self._counters)}
+        return {
+            "to_real": dict(self._to_real),
+            "counters": dict(self._counters),
+            "meta": {k: dict(v) for k, v in self._meta.items()},
+        }
 
     @classmethod
     def restore(cls, snap: dict[str, Any]) -> Vault:
-        """Reconstruit un vault depuis un ``snapshot()`` : bijection et compteurs repris."""
+        """Reconstruit un vault depuis un ``snapshot()`` : bijection et compteurs repris.
+
+        Rétrocompatible : un ancien snapshot sans clé ``"meta"`` restaure un vault
+        avec des meta vides plutôt que d'échouer.
+        """
         v = cls()
         v._to_real = dict(snap.get("to_real", {}))
         v._to_token = {real: tok for tok, real in v._to_real.items()}
         v._counters = dict(snap.get("counters", {}))
+        v._meta = {k: dict(val) for k, val in snap.get("meta", {}).items()}
         return v
 
 
