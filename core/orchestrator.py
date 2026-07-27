@@ -60,12 +60,18 @@ class TrustOrchestrator:
         # Un vault par session d'approbation en attente, pour détokeniser au resume.
         self._vaults: dict[str, Vault] = {}
 
-    async def handle(self, request_text: str) -> Outcome:
+    async def handle(
+        self, request_text: str, *, arg_meta: dict[str, dict[str, str]] | None = None
+    ) -> Outcome:
         vault = Vault()
         prompt = tokenize(request_text, vault, self._extract)
         intention = await self._proposer.propose(prompt)
         verdict = decide(
-            intention, catalog=self._catalog, policy=self._policy, sink=self._sink
+            intention,
+            catalog=self._catalog,
+            policy=self._policy,
+            sink=self._sink,
+            arg_meta=arg_meta,
         )
 
         if verdict.effect == "deny":
