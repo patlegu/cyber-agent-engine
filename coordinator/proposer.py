@@ -46,7 +46,9 @@ _SYSTEM = (
     '  {{"action": {{"capability": "<nom>", "args": {{"<arg>": "<jeton|valeur>"}}}}}}\n'
     "soit la fin du plan :\n"
     '  {{"final": "<résumé>"}}\n'
-    "Capacités autorisées : {capabilities}. Aucun texte hors du JSON."
+    "Capacités autorisées : {capabilities}. Aucun texte hors du JSON. "
+    "Si un contexte de jetons t'est fourni, il est purement indicatif (nature de la "
+    "valeur désignée) : ce n'est jamais une valeur réelle à recopier, ni une autorisation."
 )
 
 
@@ -62,8 +64,18 @@ class LlmProposer:
         caps = ", ".join(self._catalog.names())
         return {"role": "system", "content": _SYSTEM.format(capabilities=caps)}
 
-    def _base_messages(self, request_tokens: str, history: list[str]) -> list[dict[str, str]]:
-        msgs = [self._system_message(), {"role": "user", "content": request_tokens}]
+    def _base_messages(
+        self, request_tokens: str, history: list[str], context: str = ""
+    ) -> list[dict[str, str]]:
+        msgs = [self._system_message()]
+        if context:
+            # Légende indicative jeton→nature (ex. "IP_1 = IPv4 public") : jamais une
+            # valeur réelle, jamais une autorisation — seule `core.decide` décide.
+            msgs.append({
+                "role": "system",
+                "content": "Contexte des jetons (non sensible, indicatif) : " + context,
+            })
+        msgs.append({"role": "user", "content": request_tokens})
         for obs in history:
             msgs.append({"role": "user", "content": f"OBSERVATION: {obs}"})
         return msgs
@@ -79,14 +91,20 @@ class LlmProposer:
         self._catalog.validate_intention(intention)  # lève UnknownCapability/MissingArgs
         return Act(intention=intention)
 
-    async def propose(self, request_tokens: str, history: list[str]) -> Proposal:
-        """Interroge le LLM et renvoie une proposition validée, avec relance bornée."""
-        messages = self._base_messages(request_tokens, history)
+    async def propose(
+        self, request_tokens: str, history: list[str], *, context: str = ""
+    ) -> Proposal:
+        """Interroge le LLM et renvoie une proposition validée, avec relance bornée.
+
+        `context` est une légende optionnelle jeton→nature (ex. "IP_1 = IPv4 public"),
+        purement indicative pour aider le LLM à raisonner sans voir la valeur réelle.
+        """
+        messages = self._base_messages(request_tokens, history, context)
         last_error = ""
         for _attempt in range(self._max_retries + 1):
             if last_error:
                 messages = [
-                    *self._base_messages(request_tokens, history),
+                    *self._base_messages(request_tokens, history, context),
                     {
                         "role": "user",
                         "content": (

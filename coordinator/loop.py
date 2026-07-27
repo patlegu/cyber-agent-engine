@@ -30,7 +30,9 @@ from core.tokens.vault import ExtractFn, Vault, tokenize
 
 
 class ProposerLike(Protocol):
-    async def propose(self, request_tokens: str, history: list[str]) -> Proposal: ...
+    async def propose(
+        self, request_tokens: str, history: list[str], *, context: str = ""
+    ) -> Proposal: ...
 
 
 class Completed(BaseModel):
