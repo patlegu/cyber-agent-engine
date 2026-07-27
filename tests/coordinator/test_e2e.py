@@ -33,7 +33,7 @@ class _Proposer:
         self._seen = []
         self._step = 0
 
-    async def propose(self, request_tokens, history):
+    async def propose(self, request_tokens, history, *, context=""):
         self._seen.append((request_tokens, list(history)))
         self._step += 1
         if self._step == 1:

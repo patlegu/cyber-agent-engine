@@ -23,7 +23,7 @@ class _Proposer:
     def __init__(self, seq):
         self._it = iter(seq)
 
-    async def propose(self, request_tokens, history):
+    async def propose(self, request_tokens, history, *, context=""):
         return next(self._it)
 
 
