@@ -55,3 +55,7 @@ sops.yaml
 
 # Coverage
 .coverage
+
+# Artefacts de conception internes — ne pas publier
+docs/superpowers/
+docs/audit-*.md
